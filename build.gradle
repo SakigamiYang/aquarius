@@ -18,9 +18,9 @@ buildscript {
 subprojects {
     task createDirs {
         doLast {
-            sourceSets.main.java.srcDirs.each { it.mkdirs() }
+            sourceSets.main.scala.srcDirs.each { it.mkdirs() }
             sourceSets.main.resources.srcDirs.each { it.mkdirs() }
-            sourceSets.test.java.srcDirs.each { it.mkdirs() }
+            sourceSets.test.scala.srcDirs.each { it.mkdirs() }
             sourceSets.test.resources.srcDirs.each { it.mkdirs() }
         }
     }
