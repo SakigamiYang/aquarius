@@ -1,0 +1,59 @@
+group 'me.sakigami_yang'
+version '1.0.0'
+
+buildscript {
+    repositories {
+        maven { url "https://maven.aliyun.com/repository/central" }
+        maven { url "https://maven.aliyun.com/repository/gradle-plugin" }
+        mavenCentral()
+    }
+    dependencies {
+        classpath "com.github.jengelman.gradle.plugins:shadow:$shadow_plugin_version"
+        classpath "org.hidetake:gradle-ssh-plugin:$ssh_plugin_version"
+        classpath "gradle.plugin.org.scoverage:gradle-scoverage:$scoverage_plugin_version"
+        classpath "gradle.plugin.com.github.maiflai:gradle-scalatest:$scalatest_plugin_version"
+    }
+}
+
+subprojects {
+    task createDirs {
+        doLast {
+            sourceSets.main.scala.srcDirs.each { it.mkdirs() }
+            sourceSets.main.resources.srcDirs.each { it.mkdirs() }
+            sourceSets.test.scala.srcDirs.each { it.mkdirs() }
+            sourceSets.test.resources.srcDirs.each { it.mkdirs() }
+        }
+    }
+
+    apply plugin: "java"
+
+    java {
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
+        withSourcesJar()
+    }
+
+    tasks.withType(JavaCompile) {
+        options.encoding = "UTF8"
+    }
+
+    compileJava {
+        options.compilerArgs << "-parameters"
+    }
+
+    repositories {
+        maven { url "https://maven.aliyun.com/repository/central" }
+        mavenCentral()
+    }
+
+    configurations.all {
+        resolutionStrategy.preferProjectModules()
+
+        exclude group: 'commons-logging', module: 'commons-logging'
+        exclude group: 'log4j', module: 'log4j'
+        exclude group: 'org.apache.logging.log4j', module: 'log4j-to-slf4j'
+        exclude group: 'org.slf4j', module: 'slf4j-jdk14'
+        exclude group: 'org.slf4j', module: 'slf4j-jcl'
+        exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+    }
+}
