@@ -1,0 +1,3 @@
+rootProject.name = 'scala-project-aquarius'
+include 'aquarius-common'
+
