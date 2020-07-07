@@ -1,7 +1,8 @@
 package me.sakigami_yang.aquarius.common.spark
 
+import me.sakigami_yang.aquarius.common.Logging
 import org.apache.spark.SparkContext
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{SQLContext, SparkSession}
 
 abstract class SparkJob(val jobName: String = "local-spark-job",
                         val master: String = "local[*]",
@@ -22,8 +23,7 @@ abstract class SparkJob(val jobName: String = "local-spark-job",
   }
 
   @transient lazy val sc: SparkContext = spark.sparkContext
-
-  import spark.implicits._
+  @transient lazy val sqlc: SQLContext = spark.sqlContext
 
   lazy val isLocal: Boolean = master.startsWith("local")
 
