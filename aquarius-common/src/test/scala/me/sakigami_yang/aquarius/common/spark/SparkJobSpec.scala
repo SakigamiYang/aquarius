@@ -14,7 +14,7 @@ class SparkJobSpec extends AnyFunSpec with Matchers {
       }
 
       val ajob = new AJob
-      ajob.jobName shouldBe "local-spark-job"
+      ajob.appName shouldBe "local-spark-job"
       ajob.master shouldBe "local[*]"
       ajob.isLocal shouldBe true
       ajob.run()
@@ -23,7 +23,7 @@ class SparkJobSpec extends AnyFunSpec with Matchers {
 
     it("config is customized") {
       class BJob extends SparkJob {
-        override val jobName: String = "b-job"
+        override val appName: String = "b-job"
         override val master: String = "local[1]"
 
         override def run(): Unit = {
@@ -34,7 +34,7 @@ class SparkJobSpec extends AnyFunSpec with Matchers {
       }
 
       val bjob = new BJob
-      bjob.jobName shouldBe "b-job"
+      bjob.appName shouldBe "b-job"
       bjob.master shouldBe "local[1]"
       bjob.isLocal shouldBe true
       bjob.run()
