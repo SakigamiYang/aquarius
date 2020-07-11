@@ -1,4 +1,4 @@
-group 'me.sakigami_yang'
+group 'me.sakigamiyang'
 version '1.0.0'
 
 buildscript {
@@ -23,25 +23,27 @@ subprojects {
         }
     }
 
-    apply plugin: "java"
-
-    java {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
-        withSourcesJar()
-    }
-
-    tasks.withType(JavaCompile) {
-        options.encoding = "UTF8"
-    }
-
-    compileJava {
-        options.compilerArgs << "-parameters"
-    }
+    apply plugin: 'scala'
+    apply plugin: "com.github.maiflai.scalatest"
 
     repositories {
         maven { url "https://maven.aliyun.com/repository/central" }
         mavenCentral()
+    }
+
+    dependencies {
+        compile "org.slf4j:slf4j-api:$slf4j_version"
+        compile "org.slf4j:slf4j-log4j12:$slf4j_version"
+        compile "com.github.scopt:scopt_$scala_compat_version:$scopt_version"
+        compile "com.typesafe:config:$typesafe_config_version"
+
+        compileOnly "org.scala-lang:scala-compiler:$scala_version"
+        compileOnly "org.scala-lang:scala-library:$scala_version"
+        compileOnly "org.scala-lang:scala-reflect:$scala_version"
+
+        testCompile "org.scalatest:scalatest_$scala_compat_version:$scalatest_version"
+        testCompile "com.dimafeng:testcontainers-scala-scalatest_$scala_compat_version:$testcontainers_scala_version"
+        testCompile "com.vladsch.flexmark:flexmark-all:$flexmark_version"
     }
 
     configurations.all {

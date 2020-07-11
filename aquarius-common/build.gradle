@@ -1,25 +1,10 @@
-group 'me.sakigami_yang'
+group 'me.sakigamiyang'
 version '1.0.0'
 
-apply plugin: 'scala'
-apply plugin: "com.github.maiflai.scalatest"
-
 dependencies {
-    compile "org.slf4j:slf4j-api:$slf4j_version"
-    compile "org.slf4j:slf4j-log4j12:$slf4j_version"
-    compile "com.github.scopt:scopt_$scala_compat_version:$scopt_version"
-    compile "com.typesafe:config:$typesafe_config_version"
-
-    compileOnly "org.scala-lang:scala-compiler:$scala_version"
-    compileOnly "org.scala-lang:scala-library:$scala_version"
-    compileOnly "org.scala-lang:scala-reflect:$scala_version"
-
     compileOnly "org.apache.spark:spark-core_$scala_compat_version:$spark_version"
     compileOnly "org.apache.spark:spark-sql_$scala_compat_version:$spark_version"
 
-    testCompile "org.scalatest:scalatest_$scala_compat_version:$scalatest_version"
-    testCompile "com.dimafeng:testcontainers-scala-scalatest_$scala_compat_version:$testcontainers_scala_version"
-    testCompile "com.vladsch.flexmark:flexmark-all:$flexmark_version"
     testCompile "org.apache.spark:spark-sql_$scala_compat_version:$spark_version"
 }
 
