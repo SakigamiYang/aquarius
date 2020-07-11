@@ -1,11 +1,11 @@
 package me.sakigami_yang.aquarius.common.spark
 
-import org.apache.spark.sql.Row
 import org.apache.spark.sql.catalyst.ScalaReflection
 import org.apache.spark.sql.types.{DataType, StructType}
+import org.apache.spark.sql.{Encoder, Encoders, Row}
 
 import scala.io.Source
-import scala.reflect.runtime.universe.TypeTag
+import scala.reflect.runtime.universe._
 
 package object sql {
   /**
@@ -27,11 +27,12 @@ package object sql {
   /**
    * Load a schema ([[StructType]]) from a given file. The schema must be in json format.
    *
-   * @param resourcePath Path of JSON formatted resource file.
+   * @param path Path of JSON formatted resource file.
+   * @param enc  Encoding of file.
    * @return Schema.
    */
-  def loadSchemaFromFile(resourcePath: String): StructType = {
-    val bs = Source.fromFile(resourcePath)
+  def loadSchemaFromFile(path: String, enc: String = "UTF-8"): StructType = {
+    val bs = Source.fromFile(path, enc)
     try {
       val json = bs.getLines().mkString(" ")
       loadSchemaFromJson(json)
@@ -39,6 +40,11 @@ package object sql {
       bs.close()
     }
   }
+
+  /**
+   * Fix that Scala.Any is not serializable.
+   */
+  implicit val kyroEncForMapStringAny: Encoder[Map[String, Any]] = Encoders.kryo[Map[String, Any]]
 
   /**
    * Convert Spark SQL Row into a Map. Inner rows are also transformed into maps.
