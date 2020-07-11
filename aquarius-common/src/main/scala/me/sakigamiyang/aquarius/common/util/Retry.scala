@@ -1,65 +1,37 @@
 package me.sakigamiyang.aquarius.common.util
 
-import scala.concurrent.duration._
-import scala.reflect._
+import scala.util.{Failure, Success, Try}
 
 /**
- * Utility for retrying a code block that may fail. For example,
- *
- * {{{
- *   var i = 0;
- *   Retry(5) {
- *     i += 1
- *     println(s"retry #$i")
- *     throw new RuntimeException(s"retry #$i failed")
- *   }
- * }}}
- *
- * will result:
- *
- * {{{
- *   retry #1
- *   retry #2
- *   retry #3
- *   retry #4
- *   retry #5
- *   java.lang.RuntimeException: retry #5 failed
- * }}}
+ * Retry for function that may fails.
  */
 object Retry {
   /**
-   * A utility to retry something up to n times, even if a certain exception occurs
-   * It is useful when there is a possibility of exceptions and clients are responsible to retry,
-   * such as Couchbase's BackPressureException, or Asynchbase's PleaseThrottleException.
+   * Retry a function several times.
    *
-   * @param n     The maximum number of times to retry.
-   * @param delay The amount of time delay between each retry.
-   * @param f     A closure that may fail.
-   * @tparam E If this exception happens, it will retry up to n times.
-   * @return The result of successful execution of fn.
+   * @param maxTries How many times to retry.
+   * @param delay    Duration (millis) for every time retrying.
+   * @param errorFn  Function to run if it fails, to handle the error message.
+   * @param fn       The function to run, returning a Try.
+   * @tparam T Class tag.
+   * @return Try[Result] of the function.
    */
-  @annotation.tailrec
-  private def whenException[E <: Throwable : ClassTag, T](n: Int, delay: Duration = 0.millis)(f: => T): T = {
-    val tag = classTag[E]
-    val result = try {
-      Some(f)
-    } catch {
-      case tag(_) if n > 1 => None
+  def apply[T](maxTries: Int,
+               delay: Long = 0,
+               errorFn: String => Unit = _ => Unit)(fn: => Try[T]): Try[T] = {
+    @scala.annotation.tailrec
+    def retry(remainingTries: Int, delay: Long, errorFn: String => Unit)(fn: => Try[T]): Try[T] = {
+      fn match {
+        case Success(success) => Success(success)
+        case _ if remainingTries > 1 =>
+          Thread.sleep(delay)
+          retry(remainingTries - 1, delay, errorFn)(fn)
+        case Failure(failure) =>
+          errorFn(s"Tried $maxTries times, still not enough: ${failure.getMessage}")
+          Failure(failure)
+      }
     }
-    result match {
-      case Some(x) => x
-      case None =>
-        if (delay.toMillis > 0) {
-          Thread.sleep(delay.toMillis)
-        }
-        whenException(n - 1, delay)(f)
-    }
-  }
 
-  /**
-   * Retry up to n times, regardless of the kinds of exceptions occurred.
-   *
-   * @see [[whenException]]
-   */
-  def apply[T](n: Int, delay: Duration = 0.millis)(f: => T): T = whenException[Exception, T](n, delay)(f)
+    retry(maxTries, delay, errorFn)(fn)
+  }
 }
