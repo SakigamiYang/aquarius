@@ -1,0 +1,17 @@
+{
+  "type": "struct",
+  "fields": [
+    {
+      "name": "name",
+      "type": "string",
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "age",
+      "type": "integer",
+      "nullable": false,
+      "metadata": {}
+    }
+  ]
+}
