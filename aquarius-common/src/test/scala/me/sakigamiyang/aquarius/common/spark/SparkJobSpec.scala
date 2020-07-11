@@ -9,7 +9,7 @@ class SparkJobSpec extends AnyFunSpec with Matchers {
     it("config is default") {
       class AJob extends SparkJob {
         override def run(): Unit = {
-          // do nothing
+          logInfo("run nothing")
         }
       }
 
