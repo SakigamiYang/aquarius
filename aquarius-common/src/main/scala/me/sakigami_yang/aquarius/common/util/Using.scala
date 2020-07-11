@@ -24,7 +24,7 @@ import scala.util.control.{ControlThrowable, NonFatal}
  *   }
  * }}}
  *
- * If you need to manage multiple resources, [[Using.Manager$.apply `Using.Manager`]] should
+ * If you need to manage multiple resources, [[Using.Manager.apply `Using.Manager`]] should
  * be used. It allows the managing of arbitrarily many resources, whose creation, use, and
  * release are all wrapped in a `Try`.
  *
@@ -231,7 +231,7 @@ object Using {
     }
 
     @inline def suppress(t: Throwable, suppressed: Throwable): Throwable = {
-      t.addSuppressed(suppressed);
+      t.addSuppressed(suppressed)
       t
     }
 
