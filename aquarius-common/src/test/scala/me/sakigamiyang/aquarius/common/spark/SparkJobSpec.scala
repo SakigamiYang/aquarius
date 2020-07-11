@@ -1,15 +1,15 @@
 package me.sakigamiyang.aquarius.common.spark
 
+import org.apache.spark.sql.functions._
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
-import org.apache.spark.sql.functions._
 
 class SparkJobSpec extends AnyFunSpec with Matchers {
   describe("test configurations for SparkJob") {
     it("config is default") {
       class AJob extends SparkJob {
         override def run(): Unit = {
-          logInfo("run nothing")
+          logger.info("run nothing")
         }
       }
 
