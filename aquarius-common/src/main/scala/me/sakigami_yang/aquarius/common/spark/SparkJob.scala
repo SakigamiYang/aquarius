@@ -1,14 +1,21 @@
 package me.sakigami_yang.aquarius.common.spark
 
-import me.sakigami_yang.aquarius.common.Logging
+import me.sakigami_yang.aquarius.common.logging.Logging
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.{SQLContext, SparkSession}
 
-abstract class SparkJob(val jobName: String = "local-spark-job",
+/**
+ * Base class of Spark jobs.
+ *
+ * @param appName           SparkSession.Builder.appName.
+ * @param master            SparkSession.Builder.master.
+ * @param enableHiveSupport SparkSession.Builder.enableHiveSupport.
+ */
+abstract class SparkJob(val appName: String = "local-spark-job",
                         val master: String = "local[*]",
                         val enableHiveSupport: Boolean = false) extends Logging with Serializable {
   @transient lazy implicit val spark: SparkSession = {
-    val builder = SparkSession.builder().appName(jobName)
+    val builder = SparkSession.builder().appName(appName)
 
     if (isLocal) {
       builder.master(master)
