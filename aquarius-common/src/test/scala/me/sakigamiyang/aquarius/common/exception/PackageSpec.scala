@@ -1,4 +1,4 @@
-package me.sakigami_yang.aquarius.common.exception
+package me.sakigamiyang.aquarius.common.exception
 
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers

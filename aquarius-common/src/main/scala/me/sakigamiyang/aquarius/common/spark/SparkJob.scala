@@ -1,6 +1,6 @@
-package me.sakigami_yang.aquarius.common.spark
+package me.sakigamiyang.aquarius.common.spark
 
-import me.sakigami_yang.aquarius.common.logging.Logging
+import me.sakigamiyang.aquarius.common.logging.Logging
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.{SQLContext, SparkSession}
 

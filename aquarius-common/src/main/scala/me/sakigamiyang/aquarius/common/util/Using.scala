@@ -1,4 +1,4 @@
-package me.sakigami_yang.aquarius.common.util
+package me.sakigamiyang.aquarius.common.util
 
 import scala.util.Try
 import scala.util.control.{ControlThrowable, NonFatal}

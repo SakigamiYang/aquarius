@@ -1,4 +1,4 @@
-package me.sakigami_yang.aquarius.common.spark.sql
+package me.sakigamiyang.aquarius.common.spark.sql
 
 import java.nio.file.Paths
 

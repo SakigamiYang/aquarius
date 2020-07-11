@@ -1,4 +1,4 @@
-package me.sakigami_yang.aquarius.common.logging
+package me.sakigamiyang.aquarius.common.logging
 
 import org.slf4j.{Logger, LoggerFactory}
 

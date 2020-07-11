@@ -1,4 +1,4 @@
-package me.sakigami_yang.aquarius.common.util
+package me.sakigamiyang.aquarius.common.util
 
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers

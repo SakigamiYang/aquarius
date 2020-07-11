@@ -1,4 +1,4 @@
-package me.sakigami_yang.aquarius.common.spark
+package me.sakigamiyang.aquarius.common.spark
 
 import org.apache.spark.sql.catalyst.ScalaReflection
 import org.apache.spark.sql.types.{DataType, StructType}

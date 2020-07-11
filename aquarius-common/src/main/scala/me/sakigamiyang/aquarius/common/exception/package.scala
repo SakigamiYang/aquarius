@@ -1,4 +1,4 @@
-package me.sakigami_yang.aquarius.common
+package me.sakigamiyang.aquarius.common
 
 import java.io.{PrintWriter, StringWriter}
 
