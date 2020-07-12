@@ -1,4 +1,4 @@
-package me.sakigamiyang.aquarius.common.spark
+package me.sakigamiyang.aquarius.common.spark.app
 
 import org.apache.spark.sql.functions._
 import org.scalatest.funspec.AnyFunSpec

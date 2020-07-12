@@ -1,4 +1,4 @@
-package me.sakigamiyang.aquarius.common.spark
+package me.sakigamiyang.aquarius.common.spark.app
 
 import me.sakigamiyang.aquarius.common.logging.Logging
 import org.apache.spark.SparkContext

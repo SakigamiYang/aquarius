@@ -2,7 +2,7 @@ package me.sakigamiyang.aquarius.common.spark.sql
 
 import java.nio.file.Paths
 
-import me.sakigamiyang.aquarius.common.spark.SparkJob
+import me.sakigamiyang.aquarius.common.spark.app.SparkJob
 import org.apache.spark.sql.types.DataTypes
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
