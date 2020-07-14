@@ -1,9 +1,11 @@
-package me.sakigamiyang.aquarius.common.codec
+package me.sakigamiyang.aquarius.common.io
 
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 
-class PackageSpec extends AnyFunSpec with Matchers {
+import Codec._
+
+class CodecSpec extends AnyFunSpec with Matchers {
   describe("test codec") {
     it("string encoder run OK") {
       val longString =

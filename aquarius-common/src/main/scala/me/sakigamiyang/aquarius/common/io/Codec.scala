@@ -1,13 +1,11 @@
-package me.sakigamiyang.aquarius.common
+package me.sakigamiyang.aquarius.common.io
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 import java.nio.charset.StandardCharsets
 import java.util.Base64
 import java.util.zip.{GZIPInputStream, GZIPOutputStream}
 
-import me.sakigamiyang.aquarius.common.io.StreamIO
-
-package object codec {
+object Codec {
 
   /**
    * StringEncoder trait.
