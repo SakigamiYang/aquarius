@@ -1,15 +1,17 @@
-package me.sakigamiyang.aquarius.common.spark.sql
+package me.sakigamiyang.aquarius.common.spark
 
 import java.nio.file.Paths
 
-import me.sakigamiyang.aquarius.common.spark.app.SparkJob
+import me.sakigamiyang.aquarius.common.app.{SparkApp, SparkParameter, SparkParameterParser}
+import me.sakigamiyang.aquarius.common.spark.Sql._
 import org.apache.spark.sql.types.DataTypes
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
+import scopt.OptionParser
 
 case class A(name: String, age: Int)
 
-class PackageSpec extends AnyFunSpec with Matchers {
+class SqlSpec extends AnyFunSpec with Matchers {
   describe("test Spark sql utilities") {
     it("return right schema for type tag") {
       val schema = schemaFor[A]
@@ -57,13 +59,46 @@ class PackageSpec extends AnyFunSpec with Matchers {
     }
 
     it("Spark DataFrame Row to Map") {
-      val aJob = new SparkJob() {
+      final case class AlphaSparkParameter(override val appName: String = "local-spark-job",
+                                           override val master: String = "local[*]",
+                                           override val enableHiveSupport: Boolean = false) extends SparkParameter
 
-        import spark.implicits._
+      final class AlphaSparkParameterParser extends SparkParameterParser {
+        override type parameterT = AlphaSparkParameter
 
-        override val appName: String = "a-job"
+        override val parameter: parameterT = AlphaSparkParameter()
 
-        override def run(): Unit = {
+        final lazy val parser = new OptionParser[parameterT]("alpha-app") {
+          help("alpha-app")
+
+          opt[String]("app-name")
+            .optional
+            .valueName("app-name")
+            .action((value, param) => param.copy(appName = value))
+
+          opt[String]("master")
+            .optional
+            .valueName("master")
+            .action((value, param) => param.copy(master = value))
+
+          opt[Boolean]("enable-hive-support")
+            .optional
+            .valueName("app-name")
+            .action((value, param) => param.copy(enableHiveSupport = value))
+
+          override def showUsageOnError: Boolean = false
+        }
+      }
+
+      final class AlphaSparkApp extends SparkApp {
+        override type parameterT = AlphaSparkParameter
+        override type parameterParserT = AlphaSparkParameterParser
+
+        override val parameterParser: parameterParserT = new parameterParserT
+
+        override def run(parameters: parameterT): Unit = {
+          import spark.implicits._
+
           val df = spark.createDataset(Seq(A("Tom", 32), A("Jerry", 25))).toDF()
           val maps = df.map(rowToMap).collect().sortBy(_.getOrElse("age", -1).toString.toInt)
           maps(0).getOrElse("name", "").toString shouldBe "Jerry"
@@ -72,8 +107,8 @@ class PackageSpec extends AnyFunSpec with Matchers {
           maps(1).getOrElse("age", -1).toString.toInt shouldBe 32
         }
       }
-      aJob.run()
-      aJob.stop()
+
+      new AlphaSparkApp apply Array()
     }
   }
 }

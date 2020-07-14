@@ -7,7 +7,7 @@ import org.apache.spark.sql.{Encoder, Encoders, Row}
 import scala.io.Source
 import scala.reflect.runtime.universe._
 
-package object sql {
+object Sql {
   /**
    * Extract the schema ([[StructType]]) for a given type.
    *
