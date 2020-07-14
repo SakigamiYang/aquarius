@@ -2,16 +2,14 @@ package me.sakigamiyang.aquarius.common.app
 
 import scopt.OptionParser
 
-import scala.tools.cmd.CommandLineParser.ParseException
-
 /**
  * Command line option parser.
  */
-abstract class ParameterParser extends Serializable {
+abstract class SparkParameterParser extends Serializable {
   /**
    * Parameter type.
    */
-  type parameterT <: Parameter
+  type parameterT <: SparkParameter
 
   /**
    * Parameter instance.
