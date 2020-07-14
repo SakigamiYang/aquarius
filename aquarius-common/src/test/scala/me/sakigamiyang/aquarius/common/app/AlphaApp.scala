@@ -12,6 +12,6 @@ final class AlphaApp extends App {
 
 object AlphaApp {
   def main(args: Array[String]): Unit = {
-    (new AlphaApp) (args)
+    new AlphaApp apply args
   }
 }
