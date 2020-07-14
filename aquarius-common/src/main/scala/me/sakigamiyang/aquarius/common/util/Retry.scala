@@ -9,11 +9,11 @@ object Retry {
   /**
    * Retry a function several times.
    *
-   * @param maxTries How many times to retry.
-   * @param delay    Duration (millis) for every time retrying.
-   * @param errorFn  Function to run if it fails, to handle the error message.
-   * @param fn       The function to run, returning a Try.
-   * @tparam T Class tag.
+   * @param maxTries how many times to retry.
+   * @param delay    duration (millis) for every time retrying.
+   * @param errorFn  function to run if it fails, to handle the error message.
+   * @param fn       the function to run, returning a Try.
+   * @tparam T class tag.
    * @return Try[Result] of the function.
    */
   def apply[T](maxTries: Int,

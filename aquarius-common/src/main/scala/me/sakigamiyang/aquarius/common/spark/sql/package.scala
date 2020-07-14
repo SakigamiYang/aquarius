@@ -11,8 +11,8 @@ package object sql {
   /**
    * Extract the schema ([[StructType]]) for a given type.
    *
-   * @tparam T The type to extract the schema for.
-   * @return Schema.
+   * @tparam T the type to extract the schema for.
+   * @return schema.
    */
   def schemaFor[T: TypeTag]: StructType = ScalaReflection.schemaFor[T].dataType.asInstanceOf[StructType]
 
@@ -20,16 +20,16 @@ package object sql {
    * Load a schema ([[StructType]]) from a JSON string.
    *
    * @param json JSON string.
-   * @return Schema.
+   * @return schema.
    */
   def loadSchemaFromJson(json: String): StructType = DataType.fromJson(json).asInstanceOf[StructType]
 
   /**
    * Load a schema ([[StructType]]) from a given file. The schema must be in json format.
    *
-   * @param path Path of JSON formatted resource file.
-   * @param enc  Encoding of file.
-   * @return Schema.
+   * @param path path of JSON formatted resource file.
+   * @param enc  encoding of file.
+   * @return schema.
    */
   def loadSchemaFromFile(path: String, enc: String = "UTF-8"): StructType = {
     val bs = Source.fromFile(path, enc)
@@ -49,8 +49,8 @@ package object sql {
   /**
    * Convert Spark SQL Row into a Map. Inner rows are also transformed into maps.
    *
-   * @param row Spark SQL Row.
-   * @return Map.
+   * @param row spark SQL Row.
+   * @return map.
    */
   def rowToMap(row: Row): Map[String, Any] =
     row.schema.fields.map { key =>

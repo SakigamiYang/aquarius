@@ -6,8 +6,8 @@ package object exception {
   /**
    * Transforms StackTraces into a String using StringWriter.
    *
-   * @param throwable Throwable exception.
-   * @return Content of StackTrace.
+   * @param throwable throwable exception.
+   * @return content of StackTrace.
    */
   def stackTraceToString(throwable: Throwable): String = {
     val w = new StringWriter()
