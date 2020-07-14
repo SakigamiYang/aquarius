@@ -2,8 +2,6 @@ package me.sakigamiyang.aquarius.common.app
 
 import scopt.OptionParser
 
-import scala.tools.cmd.CommandLineParser.ParseException
-
 /**
  * Command line option parser.
  */

@@ -104,7 +104,7 @@ class SparkAppSpec extends AnyFunSpec with Matchers {
 
         override protected def onError(throwable: Throwable): Unit = {
           throwable.isInstanceOf[CommandLineParseException] shouldBe true
-          throwable.asInstanceOf[CommandLineParseException].getMessage.toLowerCase contains ("usage:") shouldBe true
+          throwable.asInstanceOf[CommandLineParseException].getMessage.toLowerCase contains "usage:" shouldBe true
         }
       }
 

@@ -4,7 +4,9 @@ import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 import scopt.OptionParser
 
-case class AlphaParameter(name: String = "Tom", age: Int = 23) extends Parameter
+case class AlphaParameter(override val appName: String = "alpha-app",
+                          name: String = "Tom",
+                          age: Int = 23) extends Parameter
 
 final class AlphaParameterParser extends ParameterParser {
   override type parameterT = AlphaParameter
@@ -13,6 +15,11 @@ final class AlphaParameterParser extends ParameterParser {
 
   final lazy val parser = new OptionParser[parameterT]("alpha-app") {
     help("alpha-app")
+
+    opt[String]("app-name")
+      .optional
+      .valueName("app-name")
+      .action((value, param) => param.copy(appName = value))
 
     opt[String]("name")
       .optional
@@ -40,6 +47,7 @@ class AppSpec extends AnyFunSpec with Matchers {
         override val parameterParser: parameterParserT = new parameterParserT
 
         override def run(parameters: parameterT): Unit = {
+          parameters.appName shouldBe defaultParameter.appName
           parameters.name shouldBe defaultParameter.name
           parameters.age shouldBe defaultParameter.age
         }
@@ -56,12 +64,13 @@ class AppSpec extends AnyFunSpec with Matchers {
         override val parameterParser: parameterParserT = new parameterParserT
 
         override def run(parameters: parameterT): Unit = {
+          parameters.appName shouldBe "customer name"
           parameters.name shouldBe "Jerry"
           parameters.age shouldBe 12
         }
       }
 
-      new AlphaApp apply Array("--name", "Jerry", "--age", "12")
+      new AlphaApp apply Array("--name", "Jerry", "--age", "12", "--app-name", "customer name")
     }
 
     it("wrong parameters") {
@@ -75,7 +84,7 @@ class AppSpec extends AnyFunSpec with Matchers {
 
         override protected def onError(throwable: Throwable): Unit = {
           throwable.isInstanceOf[CommandLineParseException] shouldBe true
-          throwable.asInstanceOf[CommandLineParseException].getMessage.toLowerCase contains ("usage:") shouldBe true
+          throwable.asInstanceOf[CommandLineParseException].getMessage.toLowerCase contains "usage:" shouldBe true
         }
       }
 
