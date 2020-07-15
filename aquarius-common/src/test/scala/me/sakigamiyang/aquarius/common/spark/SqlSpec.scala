@@ -4,6 +4,7 @@ import java.nio.file.Paths
 
 import me.sakigamiyang.aquarius.common.app.{SparkApp, SparkParameter, SparkParameterParser}
 import me.sakigamiyang.aquarius.common.spark.Sql._
+import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.types.DataTypes
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
@@ -96,7 +97,7 @@ class SqlSpec extends AnyFunSpec with Matchers {
 
         override val parameterParser: parameterParserT = new parameterParserT
 
-        override def run(parameters: parameterT): Unit = {
+        override def run(spark: SparkSession, isLocal: Boolean, parameters: parameterT): Unit = {
           import spark.implicits._
 
           val df = spark.createDataset(Seq(A("Tom", 32), A("Jerry", 25))).toDF()

@@ -17,11 +17,6 @@ abstract class App extends Logging with Serializable {
   type parameterParserT <: ParameterParser
 
   /**
-   * Parameter.
-   */
-  protected var parameters: parameterT = _
-
-  /**
    * Parameter parser.
    */
   protected val parameterParser: parameterParserT
@@ -60,7 +55,7 @@ abstract class App extends Logging with Serializable {
    */
   final def apply(args: Array[String]): Unit =
     try {
-      parameters = parse(args).asInstanceOf[parameterT]
+      val parameters = parse(args).asInstanceOf[parameterT]
       if (parameters != null) run(parameters)
     } catch {
       case t: Throwable => onError(t)

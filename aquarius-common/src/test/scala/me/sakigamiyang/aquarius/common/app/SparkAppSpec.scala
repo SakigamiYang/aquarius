@@ -1,5 +1,6 @@
 package me.sakigamiyang.aquarius.common.app
 
+import org.apache.spark.sql.SparkSession
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 import scopt.OptionParser
@@ -58,7 +59,7 @@ class SparkAppSpec extends AnyFunSpec with Matchers {
 
         override val parameterParser: parameterParserT = new parameterParserT
 
-        override def run(parameters: parameterT): Unit = {
+        override def run(spark: SparkSession, isLocal: Boolean, parameters: parameterT): Unit = {
           parameters.appName shouldBe defaultParameter.appName
           parameters.master shouldBe defaultParameter.master
           parameters.enableHiveSupport shouldBe defaultParameter.enableHiveSupport
@@ -77,7 +78,7 @@ class SparkAppSpec extends AnyFunSpec with Matchers {
 
         override val parameterParser: parameterParserT = new parameterParserT
 
-        override def run(parameters: parameterT): Unit = {
+        override def run(spark: SparkSession, isLocal: Boolean, parameters: parameterT): Unit = {
           parameters.appName shouldBe "customer-app-name"
           parameters.master shouldBe "local[1]"
           parameters.enableHiveSupport shouldBe false
@@ -100,7 +101,7 @@ class SparkAppSpec extends AnyFunSpec with Matchers {
 
         override val parameterParser: parameterParserT = new parameterParserT
 
-        override def run(parameters: parameterT): Unit = {}
+        override def run(spark: SparkSession, isLocal: Boolean, parameters: parameterT): Unit = {}
 
         override protected def onError(throwable: Throwable): Unit = {
           throwable.isInstanceOf[CommandLineParseException] shouldBe true
@@ -120,7 +121,7 @@ class SparkAppSpec extends AnyFunSpec with Matchers {
 
         override val parameterParser: parameterParserT = new parameterParserT
 
-        override def run(parameters: parameterT): Unit = {
+        override def run(spark: SparkSession, isLocal: Boolean, parameters: parameterT): Unit = {
           parameters.name shouldBe defaultParameter.name
           parameters.age shouldBe defaultParameter.age
         }
