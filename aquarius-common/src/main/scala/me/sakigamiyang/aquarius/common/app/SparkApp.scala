@@ -6,7 +6,7 @@ import org.apache.spark.sql.SparkSession
 /**
  * Spark app.
  */
-abstract class SparkApp extends Logging with Serializable {
+abstract class SparkApp(sparkParameterParser: SparkParameterParser) extends Logging with Serializable {
   /**
    * Parameter type.
    */
@@ -18,24 +18,19 @@ abstract class SparkApp extends Logging with Serializable {
   type parameterParserT <: SparkParameterParser
 
   /**
-   * Parameter parser.
-   */
-  protected val parameterParser: parameterParserT
-
-  /**
    * Parser command line options into Parameter.
    *
    * @param args command line options
    * @return instance of Parameter type
    */
-  final def parse(args: Array[String]): SparkParameter = parameterParser(args)
+  final def parse(args: Array[String]): SparkParameter = sparkParameterParser(args)
 
   /**
    * Run user task.
    *
    * @param parameters command line parameter
    */
-  protected def run(spark: SparkSession, isLocal: Boolean, parameters: parameterT): Unit
+  protected def run(spark: SparkSession, parameters: parameterT): Unit
 
   /**
    * On error.
@@ -57,24 +52,24 @@ abstract class SparkApp extends Logging with Serializable {
   final def apply(args: Array[String]): Unit = {
     var spark: SparkSession = null
     try {
-      val parameters = parse(args).asInstanceOf[parameterT]
-      if (parameters != null) {
-        val isLocal = parameters.master.startsWith("local")
+      val parameter = parse(args).asInstanceOf[parameterT]
+      if (parameter != null) {
+        val isLocal = parameter.master.startsWith("local")
         spark = {
-          val builder = SparkSession.builder().appName(parameters.appName)
+          val builder = SparkSession.builder().appName(parameter.appName)
           if (isLocal) {
-            builder.master(parameters.master)
+            builder.master(parameter.master)
               .config("spark.driver.host", "localhost")
               .config("spark.sql.shuffle.partitions", "1")
               .config("spark.sql.warehouse.dir", System.getProperty("java.io.tmpdir"))
           }
-          if (parameters.enableHiveSupport) {
+          if (parameter.enableHiveSupport) {
             builder.enableHiveSupport()
           }
           builder.getOrCreate()
         }
 
-        run(spark, isLocal, parameters)
+        run(spark, parameter)
       }
     } catch {
       case t: Throwable => onError(t)

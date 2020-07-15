@@ -62,12 +62,11 @@ class SqlSpec extends AnyFunSpec with Matchers {
     it("Spark DataFrame Row to Map") {
       final case class AlphaSparkParameter(override val appName: String = "local-spark-job",
                                            override val master: String = "local[*]",
-                                           override val enableHiveSupport: Boolean = false) extends SparkParameter
+                                           override val enableHiveSupport: Boolean = false)
+        extends SparkParameter(appName, master, enableHiveSupport)
 
-      final class AlphaSparkParameterParser extends SparkParameterParser {
+      final class AlphaSparkParameterParser(sparkParameter: SparkParameter) extends SparkParameterParser(sparkParameter) {
         override type parameterT = AlphaSparkParameter
-
-        override val parameter: parameterT = AlphaSparkParameter()
 
         final lazy val parser = new OptionParser[parameterT]("alpha-app") {
           help("alpha-app")
@@ -91,13 +90,11 @@ class SqlSpec extends AnyFunSpec with Matchers {
         }
       }
 
-      final class AlphaSparkApp extends SparkApp {
+      final class AlphaSparkApp(sparkParameterParser: SparkParameterParser) extends SparkApp(sparkParameterParser) {
         override type parameterT = AlphaSparkParameter
         override type parameterParserT = AlphaSparkParameterParser
 
-        override val parameterParser: parameterParserT = new parameterParserT
-
-        override def run(spark: SparkSession, isLocal: Boolean, parameters: parameterT): Unit = {
+        override def run(spark: SparkSession, parameters: parameterT): Unit = {
           import spark.implicits._
 
           val df = spark.createDataset(Seq(A("Tom", 32), A("Jerry", 25))).toDF()
@@ -109,7 +106,10 @@ class SqlSpec extends AnyFunSpec with Matchers {
         }
       }
 
-      new AlphaSparkApp apply Array()
+      val args = Array[String]()
+      val alphaSparkParameter = AlphaSparkParameter()
+      val alphaSparkParameterParser = new AlphaSparkParameterParser(alphaSparkParameter)
+      new AlphaSparkApp(alphaSparkParameterParser)(args)
     }
   }
 }

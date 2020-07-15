@@ -5,7 +5,7 @@ import me.sakigamiyang.aquarius.common.logging.Logging
 /**
  * App
  */
-abstract class App extends Logging with Serializable {
+abstract class App(parameterParser: ParameterParser) extends Logging with Serializable {
   /**
    * Parameter type.
    */
@@ -19,7 +19,7 @@ abstract class App extends Logging with Serializable {
   /**
    * Parameter parser.
    */
-  protected val parameterParser: parameterParserT
+  //  protected val parameterParser: parameterParserT
 
   /**
    * Parser command line options into Parameter.
@@ -27,7 +27,7 @@ abstract class App extends Logging with Serializable {
    * @param args command line options
    * @return instance of Parameter type
    */
-  final def parse(args: Array[String]): Parameter = parameterParser(args)
+  final def parse(args: Array[String]): Parameter = parameterParser.asInstanceOf[parameterParserT](args)
 
   /**
    * Run user task.

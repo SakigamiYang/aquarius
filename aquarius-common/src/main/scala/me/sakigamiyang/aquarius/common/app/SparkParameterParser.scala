@@ -5,16 +5,11 @@ import scopt.OptionParser
 /**
  * Command line option parser.
  */
-abstract class SparkParameterParser extends Serializable {
+abstract class SparkParameterParser(sparkParameter: SparkParameter) extends Serializable {
   /**
    * Parameter type.
    */
   type parameterT <: SparkParameter
-
-  /**
-   * Parameter instance.
-   */
-  protected val parameter: parameterT
 
   /**
    * Parser method.
@@ -27,7 +22,7 @@ abstract class SparkParameterParser extends Serializable {
    * @param args command line options
    * @return instance of parameter type
    */
-  def apply(args: Array[String]): parameterT = parser.parse(args, parameter) match {
+  def apply(args: Array[String]): parameterT = parser.parse(args, sparkParameter.asInstanceOf[parameterT]) match {
     case Some(param) => param
     case None => throw new CommandLineParseException(parser.usage)
   }
