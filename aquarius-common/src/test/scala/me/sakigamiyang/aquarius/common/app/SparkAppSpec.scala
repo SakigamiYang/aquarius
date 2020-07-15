@@ -43,6 +43,8 @@ final class AlphaSparkParameterParser(sparkParameter: SparkParameter) extends Sp
       .action((value, param) => param.copy(age = value))
 
     override def showUsageOnError: Boolean = false
+
+    override def errorOnUnknownArgument: Boolean = false
   }
 }
 

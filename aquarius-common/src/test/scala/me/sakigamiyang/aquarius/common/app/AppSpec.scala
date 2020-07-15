@@ -31,6 +31,8 @@ final class AlphaParameterParser(parameter: Parameter) extends ParameterParser(p
       .action((value, param) => param.copy(age = value))
 
     override def showUsageOnError: Boolean = false
+
+    override def errorOnUnknownArgument: Boolean = false
   }
 }
 
