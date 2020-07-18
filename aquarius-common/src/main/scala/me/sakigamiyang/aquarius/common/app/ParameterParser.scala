@@ -5,30 +5,27 @@ import scopt.OptionParser
 /**
  * Command line option parser.
  */
-abstract class ParameterParser(parameter: Parameter) extends Serializable {
+abstract class ParameterParser extends Serializable {
   /**
    * Parameter type.
    */
-  type parameterT <: Parameter
-
-  /**
-   * Parameter instance.
-   */
-  //  protected val parameter: parameterT
+  type ParameterT <: Parameter
 
   /**
    * Parser method.
    */
-  protected val parser: OptionParser[parameterT]
+  protected val parser: OptionParser[ParameterT]
 
   /**
-   * Parse command line options into specified Parameter type.
+   * Parse command line options into specific parameter instance.
    *
-   * @param args command line options
-   * @return instance of parameter type
+   * @param args      command line options
+   * @param parameter parameter instance
+   * @return Either instance, Left is usage, Right is parameter
    */
-  def apply(args: Array[String]): parameterT = parser.parse(args, parameter.asInstanceOf[parameterT]) match {
-    case Some(param) => param
-    case None => throw new CommandLineParseException(parser.usage)
-  }
+  def apply(args: Array[String])(parameter: ParameterT): Either[String, ParameterT] =
+    parser.parse(args, parameter) match {
+      case Some(p) => Right(p)
+      case None => Left(parser.usage)
+    }
 }

@@ -9,31 +9,34 @@ case class AlphaParameter(override val appName: String = "alpha-app",
                           age: Int = 23)
   extends Parameter(appName)
 
-final class AlphaParameterParser(parameter: Parameter) extends ParameterParser(parameter) {
-  override type parameterT = AlphaParameter
+object AlphaParameterParser extends ParameterParser {
+  override type ParameterT = AlphaParameter
 
-  final lazy val parser = new OptionParser[parameterT]("alpha-app") {
-    help("alpha-app")
+  override protected val parser: OptionParser[ParameterT] =
+    new OptionParser[ParameterT]("alpha-app") {
+      help("alpha-app")
 
-    opt[String]("app-name")
-      .optional
-      .valueName("app-name")
-      .action((value, param) => param.copy(appName = value))
+      opt[String]("app-name")
+        .optional
+        .valueName("app-name")
+        .action((value, param) => param.copy(appName = value))
 
-    opt[String]("name")
-      .optional
-      .valueName("name")
-      .action((value, param) => param.copy(name = value))
+      opt[String]("name")
+        .optional
+        .valueName("name")
+        .action((value, param) => param.copy(name = value))
 
-    opt[Int]("age")
-      .optional
-      .valueName("age")
-      .action((value, param) => param.copy(age = value))
+      opt[Int]("age")
+        .optional
+        .valueName("age")
+        .action((value, param) => param.copy(age = value))
 
-    override def showUsageOnError: Boolean = false
+      override def showUsageOnError: Boolean = false
 
-    override def errorOnUnknownArgument: Boolean = false
-  }
+      override def errorOnUnknownArgument: Boolean = false
+
+      override def reportWarning(msg: String): Unit = {}
+    }
 }
 
 class AppSpec extends AnyFunSpec with Matchers {
@@ -41,11 +44,10 @@ class AppSpec extends AnyFunSpec with Matchers {
     it("use default parameters") {
       val defaultParameter = AlphaParameter()
 
-      final class AlphaApp(parameterParser: ParameterParser) extends App(parameterParser) {
-        override type parameterT = AlphaParameter
-        override type parameterParserT = AlphaParameterParser
+      final class AlphaApp(parameter: Either[String, Parameter]) extends App(parameter) {
+        override type ParameterT = AlphaParameter
 
-        override def run(parameters: parameterT): Unit = {
+        override def run(parameters: ParameterT): Unit = {
           parameters.appName shouldBe defaultParameter.appName
           parameters.name shouldBe defaultParameter.name
           parameters.age shouldBe defaultParameter.age
@@ -53,17 +55,15 @@ class AppSpec extends AnyFunSpec with Matchers {
       }
 
       val args = Array[String]()
-      val alphaParameter = AlphaParameter()
-      val alphaParameterParser = new AlphaParameterParser(alphaParameter)
-      new AlphaApp(alphaParameterParser)(args)
+      val alphaParameter = AlphaParameterParser(args)(AlphaParameter())
+      new AlphaApp(alphaParameter)()
     }
 
     it("use specific parameters") {
-      final class AlphaApp(parameterParser: ParameterParser) extends App(parameterParser) {
-        override type parameterT = AlphaParameter
-        override type parameterParserT = AlphaParameterParser
+      final class AlphaApp(parameter: Either[String, Parameter]) extends App(parameter) {
+        override type ParameterT = AlphaParameter
 
-        override def run(parameters: parameterT): Unit = {
+        override def run(parameters: ParameterT): Unit = {
           parameters.appName shouldBe "customer name"
           parameters.name shouldBe "Jerry"
           parameters.age shouldBe 12
@@ -71,38 +71,33 @@ class AppSpec extends AnyFunSpec with Matchers {
       }
 
       val args = Array("--name", "Jerry", "--age", "12", "--app-name", "customer name")
-      val alphaParameter = AlphaParameter()
-      val alphaParameterParser = new AlphaParameterParser(alphaParameter)
-      new AlphaApp(alphaParameterParser)(args)
+      val alphaParameter = AlphaParameterParser(args)(AlphaParameter())
+      new AlphaApp(alphaParameter)()
     }
 
     it("wrong parameters") {
-      final class AlphaApp(parameterParser: ParameterParser) extends App(parameterParser) {
-        override type parameterT = AlphaParameter
-        override type parameterParserT = AlphaParameterParser
+      final class AlphaApp(parameter: Either[String, Parameter]) extends App(parameter) {
+        override type ParameterT = AlphaParameter
 
-        override def run(parameters: parameterT): Unit = {}
+        override def run(parameters: ParameterT): Unit = {}
 
-        override protected def onError(throwable: Throwable): Unit = {
-          throwable.isInstanceOf[CommandLineParseException] shouldBe true
-          throwable.asInstanceOf[CommandLineParseException].getMessage.toLowerCase contains "usage:" shouldBe true
+        override protected def onCommandLineParsingError(clpe: CommandLineParseException): Unit = {
+          clpe.getMessage.toLowerCase.contains("usage:") shouldBe true
         }
       }
 
       val args = Array("--not-defined", "abc")
-      val alphaParameter = AlphaParameter()
-      val alphaParameterParser = new AlphaParameterParser(alphaParameter)
-      new AlphaApp(alphaParameterParser)(args)
+      val alphaParameter = AlphaParameterParser(args)(AlphaParameter())
+      new AlphaApp(alphaParameter)()
     }
 
     it("override everything is OK") {
       val defaultParameter = AlphaParameter()
 
-      final class AlphaApp(parameterParser: ParameterParser) extends App(parameterParser) {
-        override type parameterT = AlphaParameter
-        override type parameterParserT = AlphaParameterParser
+      final class AlphaApp(parameter: Either[String, Parameter]) extends App(parameter) {
+        override type ParameterT = AlphaParameter
 
-        override def run(parameters: parameterT): Unit = {
+        override def run(parameters: ParameterT): Unit = {
           parameters.name shouldBe defaultParameter.name
           parameters.age shouldBe defaultParameter.age
         }
@@ -113,9 +108,8 @@ class AppSpec extends AnyFunSpec with Matchers {
       }
 
       val args = Array[String]()
-      val alphaParameter = AlphaParameter()
-      val alphaParameterParser = new AlphaParameterParser(alphaParameter)
-      new AlphaApp(alphaParameterParser)(args)
+      val alphaParameter = AlphaParameterParser(args)(AlphaParameter())
+      new AlphaApp(alphaParameter)()
     }
   }
 }

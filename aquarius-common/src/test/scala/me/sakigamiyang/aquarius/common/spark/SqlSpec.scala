@@ -4,13 +4,46 @@ import java.nio.file.Paths
 
 import me.sakigamiyang.aquarius.common.app.{SparkApp, SparkParameter, SparkParameterParser}
 import me.sakigamiyang.aquarius.common.spark.Sql._
-import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.types.DataTypes
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 import scopt.OptionParser
 
 case class A(name: String, age: Int)
+
+case class AlphaSparkParameter(override val appName: String = "local-spark-job",
+                               override val master: String = "local[*]",
+                               override val enableHiveSupport: Boolean = false)
+  extends SparkParameter(appName, master, enableHiveSupport)
+
+object AlphaSparkParameterParser extends SparkParameterParser {
+  override type ParameterT = AlphaSparkParameter
+
+  override protected val parser: OptionParser[ParameterT] = new OptionParser[ParameterT]("alpha-app") {
+    help("alpha-app")
+
+    opt[String]("app-name")
+      .optional
+      .valueName("app-name")
+      .action((value, param) => param.copy(appName = value))
+
+    opt[String]("master")
+      .optional
+      .valueName("master")
+      .action((value, param) => param.copy(master = value))
+
+    opt[Boolean]("enable-hive-support")
+      .optional
+      .valueName("app-name")
+      .action((value, param) => param.copy(enableHiveSupport = value))
+
+    override def showUsageOnError: Boolean = false
+
+    override def errorOnUnknownArgument: Boolean = false
+
+    override def reportWarning(msg: String): Unit = {}
+  }
+}
 
 class SqlSpec extends AnyFunSpec with Matchers {
   describe("test Spark sql utilities") {
@@ -60,43 +93,13 @@ class SqlSpec extends AnyFunSpec with Matchers {
     }
 
     it("Spark DataFrame Row to Map") {
-      final case class AlphaSparkParameter(override val appName: String = "local-spark-job",
-                                           override val master: String = "local[*]",
-                                           override val enableHiveSupport: Boolean = false)
-        extends SparkParameter(appName, master, enableHiveSupport)
+      class AlphaSparkApp(parameter: Either[String, SparkParameter]) extends SparkApp(parameter) {
 
-      final class AlphaSparkParameterParser(sparkParameter: SparkParameter) extends SparkParameterParser(sparkParameter) {
-        override type parameterT = AlphaSparkParameter
+        import spark.implicits._
 
-        final lazy val parser = new OptionParser[parameterT]("alpha-app") {
-          help("alpha-app")
+        override type ParameterT = AlphaSparkParameter
 
-          opt[String]("app-name")
-            .optional
-            .valueName("app-name")
-            .action((value, param) => param.copy(appName = value))
-
-          opt[String]("master")
-            .optional
-            .valueName("master")
-            .action((value, param) => param.copy(master = value))
-
-          opt[Boolean]("enable-hive-support")
-            .optional
-            .valueName("app-name")
-            .action((value, param) => param.copy(enableHiveSupport = value))
-
-          override def showUsageOnError: Boolean = false
-        }
-      }
-
-      final class AlphaSparkApp(sparkParameterParser: SparkParameterParser) extends SparkApp(sparkParameterParser) {
-        override type parameterT = AlphaSparkParameter
-        override type parameterParserT = AlphaSparkParameterParser
-
-        override def run(spark: SparkSession, parameters: parameterT): Unit = {
-          import spark.implicits._
-
+        override def run(parameters: ParameterT): Unit = {
           val df = spark.createDataset(Seq(A("Tom", 32), A("Jerry", 25))).toDF()
           val maps = df.map(rowToMap).collect().sortBy(_.getOrElse("age", -1).toString.toInt)
           maps(0).getOrElse("name", "").toString shouldBe "Jerry"
@@ -107,9 +110,8 @@ class SqlSpec extends AnyFunSpec with Matchers {
       }
 
       val args = Array[String]()
-      val alphaSparkParameter = AlphaSparkParameter()
-      val alphaSparkParameterParser = new AlphaSparkParameterParser(alphaSparkParameter)
-      new AlphaSparkApp(alphaSparkParameterParser)(args)
+      val alphaSparkParameter = AlphaSparkParameterParser(args)(AlphaSparkParameter())
+      new AlphaSparkApp(alphaSparkParameter)()
     }
   }
 }

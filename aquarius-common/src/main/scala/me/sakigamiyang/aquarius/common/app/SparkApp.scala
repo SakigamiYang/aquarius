@@ -1,36 +1,33 @@
 package me.sakigamiyang.aquarius.common.app
 
 import me.sakigamiyang.aquarius.common.logging.Logging
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.SparkContext
+import org.apache.spark.sql.{SQLContext, SparkSession}
 
 /**
  * Spark app.
+ *
+ * @param parameter Either instance, Left is usage, Right is spark parameter
  */
-abstract class SparkApp(sparkParameterParser: SparkParameterParser) extends Logging with Serializable {
+abstract class SparkApp(parameter: Either[String, SparkParameter]) extends Logging with Serializable {
   /**
    * Parameter type.
    */
-  type parameterT <: SparkParameter
-
-  /**
-   * Parameter parser type.
-   */
-  type parameterParserT <: SparkParameterParser
-
-  /**
-   * Parser command line options into Parameter.
-   *
-   * @param args command line options
-   * @return instance of Parameter type
-   */
-  final def parse(args: Array[String]): SparkParameter = sparkParameterParser(args)
+  type ParameterT <: SparkParameter
 
   /**
    * Run user task.
    *
-   * @param parameters command line parameter
+   * @param parameter command line parameter
    */
-  protected def run(spark: SparkSession, parameters: parameterT): Unit
+  protected def run(parameter: ParameterT): Unit
+
+  /**
+   * On command line parsing error.
+   *
+   * @param clpe exception
+   */
+  protected def onCommandLineParsingError(clpe: CommandLineParseException): Unit = clpe.printStackTrace(System.err)
 
   /**
    * On error.
@@ -44,34 +41,35 @@ abstract class SparkApp(sparkParameterParser: SparkParameterParser) extends Logg
    */
   protected def onFinally(): Unit = {}
 
+  @transient lazy val spark: SparkSession = {
+    val p = parameter.right.get
+    val builder = SparkSession.builder().appName(p.appName)
+    if (isLocal) {
+      builder.master(p.master)
+        .config("spark.driver.host", "localhost")
+        .config("spark.sql.shuffle.partitions", "1")
+        .config("spark.sql.warehouse.dir", System.getProperty("java.io.tmpdir"))
+    }
+    if (p.enableHiveSupport) {
+      builder.enableHiveSupport()
+    }
+    builder.getOrCreate()
+  }
+  @transient lazy val sc: SparkContext = spark.sparkContext
+  @transient lazy val sqlc: SQLContext = spark.sqlContext
+  @transient lazy val isLocal: Boolean = parameter.right.get.master.startsWith("local")
+
   /**
    * Run parameter parsing and user task.
-   *
-   * @param args command line options
    */
-  final def apply(args: Array[String]): Unit = {
-    var spark: SparkSession = null
+  final def apply(): Unit = {
     try {
-      val parameter = parse(args).asInstanceOf[parameterT]
-      if (parameter != null) {
-        val isLocal = parameter.master.startsWith("local")
-        spark = {
-          val builder = SparkSession.builder().appName(parameter.appName)
-          if (isLocal) {
-            builder.master(parameter.master)
-              .config("spark.driver.host", "localhost")
-              .config("spark.sql.shuffle.partitions", "1")
-              .config("spark.sql.warehouse.dir", System.getProperty("java.io.tmpdir"))
-          }
-          if (parameter.enableHiveSupport) {
-            builder.enableHiveSupport()
-          }
-          builder.getOrCreate()
-        }
-
-        run(spark, parameter)
+      parameter match {
+        case Right(param) => run(param.asInstanceOf[ParameterT])
+        case Left(usage) => throw new CommandLineParseException(usage)
       }
     } catch {
+      case clpe: CommandLineParseException => onCommandLineParsingError(clpe)
       case t: Throwable => onError(t)
     } finally {
       onFinally()
