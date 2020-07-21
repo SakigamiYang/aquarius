@@ -5,6 +5,7 @@ dependencies {
     compileOnly "org.apache.spark:spark-core_$scala_compat_version:$spark_version"
     compileOnly "org.apache.spark:spark-sql_$scala_compat_version:$spark_version"
 
+    testCompile "org.apache.spark:spark-core_$scala_compat_version:$spark_version"
     testCompile "org.apache.spark:spark-sql_$scala_compat_version:$spark_version"
 }
 
