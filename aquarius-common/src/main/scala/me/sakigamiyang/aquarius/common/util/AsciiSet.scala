@@ -80,8 +80,6 @@ trait AsciiSet {
 
 /** An inclusive range of ASCII characters */
 private final class AsciiRange(first: Int, last: Int) extends AsciiSet {
-  require(first >= 0 && first < last && last < 256)
-
   override def toString: String = s"(${Integer.toHexString(first)}- ${Integer.toHexString(last)})"
 
   override def getInternal(i: Int): Boolean = i >= first && i <= last
@@ -89,15 +87,11 @@ private final class AsciiRange(first: Int, last: Int) extends AsciiSet {
 
 /** A set with a single ASCII character in it. */
 private final class AsciiChar(i: Int) extends AsciiSet {
-  require(i >= 0 && i <= 256)
-
   override def getInternal(i: Int): Boolean = i == this.i
 }
 
 /** A union of two [[AsciiSet]]s. */
 private final class AsciiUnion(a: AsciiSet, b: AsciiSet) extends AsciiSet {
-  require(a != null && b != null)
-
   override def getInternal(i: Int): Boolean = a.getInternal(i) || b.getInternal(i)
 }
 
