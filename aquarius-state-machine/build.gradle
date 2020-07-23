@@ -1,0 +1,10 @@
+group 'me.sakigamiyang'
+version '1.0.0'
+
+dependencies {
+    compile project(":aquarius-common")
+}
+
+test {
+    maxParallelForks = 1
+}
