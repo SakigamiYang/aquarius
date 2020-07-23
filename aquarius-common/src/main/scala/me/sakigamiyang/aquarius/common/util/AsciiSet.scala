@@ -54,7 +54,7 @@ trait AsciiSet {
    *
    * @param i integer
    */
-  protected def getInternal(i: Int): Boolean
+  def getInternal(i: Int): Boolean
 
   /**
    * Join together two sets.
@@ -79,19 +79,19 @@ trait AsciiSet {
 }
 
 /** An inclusive range of ASCII characters */
-private final class AsciiRange(first: Int, last: Int) extends AsciiSet {
+private[common] final class AsciiRange(first: Int, last: Int) extends AsciiSet {
   override def toString: String = s"(${Integer.toHexString(first)}- ${Integer.toHexString(last)})"
 
   override def getInternal(i: Int): Boolean = i >= first && i <= last
 }
 
 /** A set with a single ASCII character in it. */
-private final class AsciiChar(i: Int) extends AsciiSet {
+private[common] final class AsciiChar(i: Int) extends AsciiSet {
   override def getInternal(i: Int): Boolean = i == this.i
 }
 
 /** A union of two [[AsciiSet]]s. */
-private final class AsciiUnion(a: AsciiSet, b: AsciiSet) extends AsciiSet {
+private[common] final class AsciiUnion(a: AsciiSet, b: AsciiSet) extends AsciiSet {
   override def getInternal(i: Int): Boolean = a.getInternal(i) || b.getInternal(i)
 }
 
@@ -99,7 +99,7 @@ private final class AsciiUnion(a: AsciiSet, b: AsciiSet) extends AsciiSet {
  * An efficient representation of a set of ASCII characters. Created by
  * building an [[AsciiSet]] then calling `toBitSet` on it.
  */
-private final class AsciiBitSet private[util](bitSet: JBitSet) extends AsciiSet {
+private[common] final class AsciiBitSet private[util](bitSet: JBitSet) extends AsciiSet {
   def get(i: Int): Boolean = {
     if (i < 0 || i > 255)
       throw new IllegalArgumentException(s"Character $i cannot match AsciiSet because it is out of range")
