@@ -3,6 +3,7 @@ version '1.0.0'
 
 buildscript {
     repositories {
+        mavenLocal()
         maven { url "https://maven.aliyun.com/repository/central" }
         maven { url "https://maven.aliyun.com/repository/gradle-plugin" }
         mavenCentral()
@@ -16,8 +17,10 @@ buildscript {
 subprojects {
     task createDirs {
         doLast {
+            sourceSets.main.java.srcDirs.each { it.mkdirs() }
             sourceSets.main.scala.srcDirs.each { it.mkdirs() }
             sourceSets.main.resources.srcDirs.each { it.mkdirs() }
+            sourceSets.test.java.srcDirs.each { it.mkdirs() }
             sourceSets.test.scala.srcDirs.each { it.mkdirs() }
             sourceSets.test.resources.srcDirs.each { it.mkdirs() }
         }
@@ -27,6 +30,7 @@ subprojects {
     apply plugin: "com.github.maiflai.scalatest"
 
     repositories {
+        mavenLocal()
         maven { url "https://maven.aliyun.com/repository/central" }
         mavenCentral()
     }
