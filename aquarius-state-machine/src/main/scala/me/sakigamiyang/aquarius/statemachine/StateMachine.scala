@@ -66,6 +66,7 @@ class StateMachine[TState, TTrigger] private[statemachine](private val states: M
     for (((state, trigger), nextState) <- transmissions) {
       sb ++= indentSpaces
       sb ++= s"$state*$trigger->$nextState,"
+      sb ++= newline
     }
     sb.delete(sb.length - 1 - newline.length, sb.length)
     sb ++= newline ++= ")"
