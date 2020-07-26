@@ -1,13 +1,19 @@
 package me.sakigamiyang.aquarius.statemachine
 
-import me.sakigamiyang.aquarius.common.logging.Logging
-
 import scala.reflect.runtime.universe._
 
-class State[TState] private[statemachine](private var state: TState,
-                                          private var enterAction: Seq[(Type, Any)] => Unit,
-                                          private var exitAction: Seq[(Type, Any)] => Unit)
-  extends Equals with Serializable with Logging {
+/**
+ * State class.
+ *
+ * @param state       content of state
+ * @param enterAction function to run when entering in this state
+ * @param exitAction  function to run when leaving from this state
+ * @tparam TState type of state
+ */
+final class State[TState] private[statemachine](private var state: TState,
+                                                private var enterAction: Seq[(Type, Any)] => Unit,
+                                                private var exitAction: Seq[(Type, Any)] => Unit)
+  extends Equals with Serializable {
 
   def getState: TState = state
 
@@ -28,7 +34,7 @@ class State[TState] private[statemachine](private var state: TState,
   override def toString: String = getState.toString
 }
 
-object State extends Logging {
+object State {
 
   class Builder[TState] {
     private[this] var internalState: TState = _

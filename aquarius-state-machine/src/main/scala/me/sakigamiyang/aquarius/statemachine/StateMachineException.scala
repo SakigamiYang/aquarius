@@ -1,3 +1,8 @@
 package me.sakigamiyang.aquarius.statemachine
 
-class StateMachineException(message: String) extends RuntimeException(message)
+/**
+ * Exception class for state machine.
+ *
+ * @param message error message
+ */
+final class StateMachineException(message: String) extends RuntimeException(message)

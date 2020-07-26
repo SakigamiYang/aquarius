@@ -1,31 +1,63 @@
 package me.sakigamiyang.aquarius.statemachine
 
-import me.sakigamiyang.aquarius.common.logging.Logging
+import me.sakigamiyang.aquarius.common.io.FileUtils
 
 import scala.collection.mutable
 import scala.reflect.runtime.universe._
 
-class StateMachine[TState, TTrigger] private[statemachine](private val states: Map[TState, State[TState]],
-                                                           private val transmissions: Map[(State[TState], TTrigger), State[TState]],
-                                                           private val initialState: State[TState])
-  extends Serializable with Logging {
+/**
+ * State machine
+ *
+ * @param states        states
+ * @param transmissions transmissions (Map from 'state * trigger' to 'nextState')
+ * @param initialState  initial state
+ * @tparam TState   type of state
+ * @tparam TTrigger type of trigger
+ */
+final class StateMachine[TState, TTrigger] private[statemachine](private val states: Map[TState, State[TState]],
+                                                                 private val transmissions: Map[(State[TState], TTrigger), State[TState]],
+                                                                 private val initialState: State[TState])
+  extends Serializable {
 
   private[this] var lastState: Option[State[TState]] = None
 
   private[this] var currentState: State[TState] = initialState
 
-  def getInitialState: State[TState] = initialState
+  /**
+   * Get initial state.
+   *
+   * @return initial state
+   */
+  def getInitialState: TState = initialState.getState
 
-  def getLastState: State[TState] = lastState match {
-    case Some(value) => value
-    case _ => throw new StateMachineException(s"StateMachine is just initialized, last state is undefined")
+  /**
+   * Get last state.
+   *
+   * @return last state
+   */
+  def getLastState: TState = lastState match {
+    case Some(value) => value.getState
+    case _ => throw new StateMachineException(s"StateMachine is just initialized without having last state")
   }
 
-  def getCurrentState: State[TState] = currentState
+  /**
+   * Get current state.
+   *
+   * @return current state
+   */
+  def getCurrentState: TState = currentState.getState
 
+  /**
+   * Fire a trigger to transmit this state machine to next state.
+   *
+   * @param trigger              trigger
+   * @param currentStateExitArgs arguments of exit action for current state
+   * @param nextStateEnterArgs   arguments of enter action for next state
+   * @return state machine
+   */
   def fire(trigger: TTrigger,
-           currentStateExitArgs: Seq[(Type, Any)],
-           nextStateEnterArgs: Seq[(Type, Any)]): StateMachine[TState, TTrigger] = {
+           currentStateExitArgs: Seq[(Type, Any)] = Seq(),
+           nextStateEnterArgs: Seq[(Type, Any)] = Seq()): StateMachine[TState, TTrigger] = {
     transmissions.get((currentState, trigger)) match {
       case Some(nextState) =>
         lastState match {
@@ -40,9 +72,17 @@ class StateMachine[TState, TTrigger] private[statemachine](private val states: M
     this
   }
 
+  /**
+   * Force to set specific state to this state machine.
+   *
+   * @param state                specific state
+   * @param currentStateExitArgs arguments of exit action for current state
+   * @param nextStateEnterArgs   arguments of enter action for next state
+   * @return state machine
+   */
   def forceState(state: TState,
-                 currentStateExitArgs: Seq[(Type, Any)],
-                 nextStateEnterArgs: Seq[(Type, Any)]): StateMachine[TState, TTrigger] = {
+                 currentStateExitArgs: Seq[(Type, Any)] = Seq(),
+                 nextStateEnterArgs: Seq[(Type, Any)] = Seq()): StateMachine[TState, TTrigger] = {
     val ns = states.get(state) match {
       case Some(value) => value
       case None => throw new StateMachineException(s"State [$state] is undefined")
@@ -57,76 +97,118 @@ class StateMachine[TState, TTrigger] private[statemachine](private val states: M
     this
   }
 
-  def toFormattedString(newline: String = "\n", indent: Int = 2): String = {
-    require(newline != null)
+  /**
+   * To formatted string.
+   *
+   * @param newLine separator for newline
+   * @param indent  length of indent spaces
+   * @return formatted string
+   */
+  def toFormattedString(newLine: FileUtils.NewLines = FileUtils.NewLines.SYSTEM_DEPENDENT, indent: Int = 2): String = {
     require(indent >= 0)
-    val indentSpaces = " " * (if (newline.isEmpty) 0 else indent)
-    val sb = new mutable.StringBuilder
-    sb ++= "StateMachine(" ++= newline
-    for (((state, trigger), nextState) <- transmissions) {
-      sb ++= indentSpaces
-      sb ++= s"$state*$trigger->$nextState,"
-      sb ++= newline
-    }
-    sb.delete(sb.length - 1 - newline.length, sb.length)
-    sb ++= newline ++= ")"
-    sb.result()
+
+    val indentSpaces = " " * indent
+    transmissions.map {
+      case ((state, trigger), nextState) => s"$indentSpaces$state*$trigger->$nextState"
+    }.mkString(s"StateMachine(${newLine.getContent}", s",${newLine.getContent}", s"${newLine.getContent})")
   }
 
-  override def toString: String = toFormattedString(newline = "")
+  /**
+   * To string.
+   *
+   * @return string
+   */
+  override def toString: String = {
+    transmissions.map {
+      case ((state, trigger), nextState) => s"$state*$trigger->$nextState"
+    }.mkString("StateMachine(", ",", ")")
+  }
 }
 
-object StateMachine extends Logging {
+object StateMachine {
+
+  type EnterActionType = Seq[(Type, Any)] => Unit
+  type ExitActionType = Seq[(Type, Any)] => Unit
 
   class Builder[TState, TTrigger] {
-    private[this] var initialState: State[TState] = _
-    private[this] var states: Map[TState, State[TState]] = Map()
-    private[this] var transmissions: Map[(State[TState], TTrigger), State[TState]] = Map()
+    private[this] var initialState: TState = _
+    private[this] var states: mutable.Buffer[TState] = mutable.Buffer()
+    private[this] var transmissions: mutable.Buffer[(TState, TTrigger, TState)] = mutable.Buffer()
+    private[this] var mapStateActions: mutable.Map[TState, (EnterActionType, ExitActionType)] = mutable.Map()
 
     def initState(state: TState): Builder[TState, TTrigger] = {
-      initialState = states.get(state) match {
-        case Some(value) => value
-        case None => throw new StateMachineException(s"State [$state] is undefined")
-      }
-
+      initialState = state
       this
     }
 
     def addState(state: TState,
-                 enterAction: Seq[(Type, Any)] => Unit = (_: Seq[(Type, Any)]) => (),
-                 exitAction: Seq[(Type, Any)] => Unit = (_: Seq[(Type, Any)]) => ()): Builder[TState, TTrigger] = {
-      if (states.contains(state))
-        throw new StateMachineException(s"State [$state] should be added only once")
-      states +=
-        state -> State.builder()
-          .setState(state)
-          .registerEnterAction(enterAction)
-          .registerExitAction(exitAction)
-          .build()
+                 enterAction: EnterActionType = (_: Seq[(Type, Any)]) => (),
+                 exitAction: ExitActionType = (_: Seq[(Type, Any)]) => ()): Builder[TState, TTrigger] = {
+      states :+= state
+      mapStateActions += state -> (enterAction, exitAction)
       this
     }
 
     def addTransmission(state: TState, trigger: TTrigger, nextState: TState): Builder[TState, TTrigger] = {
-      require(state != null)
-      require(trigger != null)
-      require(nextState != null)
-
-      val s = states.get(state) match {
-        case Some(value) => value
-        case None => throw new StateMachineException(s"State [$state] is undefined")
-      }
-      val ns = states.get(nextState) match {
-        case Some(value) => value
-        case None => throw new StateMachineException(s"State [$nextState] is undefined")
-      }
-      if (transmissions.contains((s, trigger)))
-        throw new StateMachineException(s"Transmission [$state $trigger] should be added only once")
-      transmissions += (s, trigger) -> ns
+      transmissions :+= (state, trigger, nextState)
       this
     }
 
+    private[this] def validate(): Either[String, Unit] = {
+      var errorKeys: String = ""
+
+      // Check whether a state was defined by more than once.
+      errorKeys = states.groupBy(identity).mapValues(_.length).filter(_._2 > 1).keys.mkString(",")
+      if (!errorKeys.isEmpty) return Left(s"States [$errorKeys] should be defined only once")
+
+      // Check whether a tuple of (state, trigger) was defined by more than once.
+      errorKeys = transmissions.groupBy(t => (t._1, t._2))
+        .mapValues(_.length)
+        .filter(_._2 > 1)
+        .keys
+        .map { case (state, trigger) => s"$state*$trigger" }
+        .mkString(",")
+      if (!errorKeys.isEmpty) return Left(s"Transmissions [$errorKeys] should be added only once")
+
+      // Check whether all states in transmissions (including state and nextState) are defined in states.
+      errorKeys = transmissions.flatMap(t => Seq(t._1, t._3))
+        .distinct
+        .filterNot(states.contains)
+        .mkString(",")
+      if (!errorKeys.isEmpty) return Left(s"States [$errorKeys] in transmissions are undefined")
+
+      // Check whether the initial state is defined in states.
+      if (!states.contains(initialState)) return Left(s"Initial state [$initialState] is undefined")
+
+      Right(Unit)
+    }
+
     def build(): StateMachine[TState, TTrigger] = {
-      new StateMachine(states, transmissions, initialState)
+      validate() match {
+
+        case Right(_) =>
+          // states
+          val internalStates = mapStateActions.map {
+            case (state, (enterAction, exitAction)) =>
+              (state,
+                State.builder()
+                  .setState(state)
+                  .registerEnterAction(enterAction)
+                  .registerExitAction(exitAction)
+                  .build())
+          }.toMap
+          // transmissions
+          val internalTransmissions = transmissions.map {
+            case (state, trigger, nextState) =>
+              ((internalStates(state), trigger), internalStates(nextState))
+          }.toMap
+          // initial state
+          val internalInitialState = internalStates(initialState)
+          // state machine
+          new StateMachine(internalStates, internalTransmissions, internalInitialState)
+
+        case Left(message) => throw new StateMachineException(message)
+      }
     }
   }
 
