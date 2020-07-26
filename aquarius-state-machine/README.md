@@ -45,11 +45,10 @@ StateMachine.builder()
 stateMachine.fire(1).forceState(3)
 ```
 
-When changing state, you can also specify arguments for enter action like this:
+When changing state, you can also specify arguments for enter action.<br />Notice that, arguments will be passed as a ```Seq``` of ```Tuple[Type, Any]```. 
 
-Notice that, arguments will be passed as a ```Seq``` of ```Tuple[Type, Any]```. 
+BTW, Exit action has no arguments.
 
-Exit action has no arguments.
 ```scala
 stateMachine.fire(
     1,
