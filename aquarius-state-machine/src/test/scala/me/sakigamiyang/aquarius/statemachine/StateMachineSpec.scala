@@ -4,8 +4,10 @@ import me.sakigamiyang.aquarius.common.io.FileUtils
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 
+import scala.reflect.runtime.universe._
+
 class StateMachineSpec extends AnyFunSpec with Matchers {
-  describe("test retry") {
+  describe("test state machine") {
     it("convert to string") {
       val sm = StateMachine
         .builder()
@@ -22,7 +24,6 @@ class StateMachineSpec extends AnyFunSpec with Matchers {
         .build()
 
       val s = sm.toString
-      println(s)
       "^StateMachine\\(.*\\)$".r.pattern.matcher(s).matches shouldBe true
       s.contains("State(a)*1->State(b)") shouldBe true
       s.contains("State(a)*2->State(c)") shouldBe true
@@ -171,6 +172,85 @@ class StateMachineSpec extends AnyFunSpec with Matchers {
         .build()
 
       sm.fire(2).getLastState shouldBe "a"
+    }
+
+    it("fire trigger") {
+      val sm = StateMachine.builder()
+        .initState(1)
+        .addState(1)
+        .addState(2)
+        .addTransmission(1, 1, 2)
+        .build()
+
+      sm.getCurrentState shouldBe 1
+      sm.fire(1)
+      sm.getCurrentState shouldBe 2
+    }
+
+    it("forced to set to some state") {
+      val sm = StateMachine.builder()
+        .initState(1)
+        .addState(1)
+        .addState(2)
+        .addState(3)
+        .addTransmission(1, 1, 2)
+        .addTransmission(2, 1, 3)
+        .build()
+
+      sm.getCurrentState shouldBe 1
+      sm.fire(1).forceState(3)
+      sm.getCurrentState shouldBe 3
+    }
+
+    it("run enter action and exit action with no parameters") {
+      var s = ""
+
+      val sm = StateMachine.builder()
+        .initState(1)
+        .addState(1,
+          (_: Seq[(Type, Any)]) => s += " enter 1",
+          () => s += " exit 1")
+        .addState(2,
+          (_: Seq[(Type, Any)]) => s += " enter 2",
+          () => s += " exit 2")
+        .addState(3,
+          (_: Seq[(Type, Any)]) => s += " enter 3",
+          () => s += " exit 3")
+        .addTransmission(1, 1, 2)
+        .addTransmission(2, 1, 3)
+        .build()
+
+      sm.fire(1).forceState(3)
+      s.trim shouldBe "exit 1 enter 2 exit 2 enter 3"
+    }
+
+    it("run enter action and exit action with parameters") {
+      var s = ""
+
+      val sm = StateMachine.builder()
+        .initState(1)
+        .addState(1,
+          (enterArgs1: Seq[(Type, Any)]) => s += s" enter 1 (+${enterArgs1.length} params)",
+          () => s += " exit 1")
+        .addState(2,
+          (enterArgs2: Seq[(Type, Any)]) => s += s" enter 2 (+${enterArgs2.length} params)",
+          () => s += " exit 2")
+        .addState(3,
+          (enterArgs3: Seq[(Type, Any)]) => s += s" enter 3 (+${enterArgs3.length} params)",
+          () => s += " exit 3")
+        .addTransmission(1, 1, 2)
+        .addTransmission(2, 1, 3)
+        .build()
+
+      sm.fire(
+        1,
+        (typeOf[Int], 1)
+      ).forceState(
+        3,
+        (typeOf[Int], 1),
+        (typeOf[String], "a")
+      )
+      s.trim shouldBe "exit 1 enter 2 (+1 params) exit 2 enter 3 (+2 params)"
     }
   }
 }
