@@ -2,7 +2,7 @@
 
 State machine library.
 
-You can create a state machine like this:
+**Create a state machine.**
 
 ```scala
 StateMachine
@@ -20,7 +20,7 @@ StateMachine
   .build()
 ```
 
-You can also specify enter action and exit action for states like this:
+**Specify enter action and exit action for states.**
 
 ```scala
 StateMachine.builder()
@@ -39,7 +39,7 @@ StateMachine.builder()
   .build()
 ```
 
-Using ```fire``` or ```forceState``` to change like this:
+**Using ```fire``` or ```forceState``` to change the state of state machine.**
 
 ```scala
 stateMachine.fire(1).forceState(3)
@@ -61,4 +61,4 @@ stateMachine.fire(
   )
 ```
 
-Using ```getInitialState```, ```getLastState```, ```getCurrentState``` to show the status of state machine.
+**Using ```getInitialState```, ```getLastState```, ```getCurrentState``` to show the status of state machine.**
