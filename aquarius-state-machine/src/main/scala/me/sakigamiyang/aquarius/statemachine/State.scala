@@ -31,7 +31,7 @@ final class State[TState] private[statemachine](private var state: TState,
 
   override def hashCode(): Int = getState.hashCode
 
-  override def toString: String = getState.toString
+  override def toString: String = s"State($getState)"
 }
 
 object State {
