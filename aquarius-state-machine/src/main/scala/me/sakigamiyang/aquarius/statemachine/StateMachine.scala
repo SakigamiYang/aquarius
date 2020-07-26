@@ -47,6 +47,24 @@ final class StateMachine[TState, TTrigger] private[statemachine](private val sta
    */
   def getCurrentState: TState = currentState.getState
 
+  private[this] def transmitTo(nextState: Option[State[TState]],
+                               currentStateExitArgs: Seq[(Type, Any)] = Seq(),
+                               nextStateEnterArgs: Seq[(Type, Any)] = Seq(),
+                               errorMessage: String): Unit = {
+    nextState match {
+      case Some(value) =>
+        lastState match {
+          case Some(value) => value.exit(currentStateExitArgs)
+          case None =>
+        }
+        lastState = Some(currentState)
+        currentState = value
+        currentState.enter(nextStateEnterArgs)
+      case None => throw new StateMachineException(errorMessage)
+    }
+
+  }
+
   /**
    * Fire a trigger to transmit this state machine to next state.
    *
@@ -58,17 +76,11 @@ final class StateMachine[TState, TTrigger] private[statemachine](private val sta
   def fire(trigger: TTrigger,
            currentStateExitArgs: Seq[(Type, Any)] = Seq(),
            nextStateEnterArgs: Seq[(Type, Any)] = Seq()): StateMachine[TState, TTrigger] = {
-    transmissions.get((currentState, trigger)) match {
-      case Some(nextState) =>
-        lastState match {
-          case Some(value) => value.exit(currentStateExitArgs)
-          case None =>
-        }
-        lastState = Some(currentState)
-        currentState = nextState
-        currentState.enter(nextStateEnterArgs)
-      case None => throw new StateMachineException(s"Transmission [$currentState, $trigger] is undefined")
-    }
+    transmitTo(
+      transmissions.get((currentState, trigger)),
+      currentStateExitArgs,
+      nextStateEnterArgs,
+      s"Transmission [$currentState*$trigger] is undefined")
     this
   }
 
@@ -83,17 +95,11 @@ final class StateMachine[TState, TTrigger] private[statemachine](private val sta
   def forceState(state: TState,
                  currentStateExitArgs: Seq[(Type, Any)] = Seq(),
                  nextStateEnterArgs: Seq[(Type, Any)] = Seq()): StateMachine[TState, TTrigger] = {
-    val ns = states.get(state) match {
-      case Some(value) => value
-      case None => throw new StateMachineException(s"State [$state] is undefined")
-    }
-    lastState match {
-      case Some(value) => value.exit(currentStateExitArgs)
-      case None =>
-    }
-    lastState = Some(currentState)
-    currentState = ns
-    currentState.enter(nextStateEnterArgs)
+    transmitTo(
+      states.get(state),
+      currentStateExitArgs,
+      nextStateEnterArgs,
+      s"State [$state] is undefined")
     this
   }
 
