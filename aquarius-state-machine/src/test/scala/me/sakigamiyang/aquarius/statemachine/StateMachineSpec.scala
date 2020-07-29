@@ -1,6 +1,6 @@
 package me.sakigamiyang.aquarius.statemachine
 
-import me.sakigamiyang.aquarius.common.io.FileUtils
+import me.sakigamiyang.aquarius.common.io.NewLines
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -60,7 +60,7 @@ class StateMachineSpec extends AnyFunSpec with Matchers {
       fs.contains(s"${indentSpaces}State(c)*-2->State(a)") shouldBe true
       fs.contains(s"${indentSpaces}State(c)*-1->State(b)") shouldBe true
 
-      FileUtils.NewLines.SYSTEM_DEPENDENT.getContent.foreach(c => fs.count(_ == c) shouldBe 7)
+      NewLines.SYSTEM_DEPENDENT.value.foreach(c => fs.count(_ == c) shouldBe 7)
     }
 
     it("convert to formatted string with newLine=\\r and indent=8") {
@@ -79,7 +79,7 @@ class StateMachineSpec extends AnyFunSpec with Matchers {
         .build()
 
       val indent = 8
-      val fs = sm.toFormattedString(FileUtils.NewLines.CLASSIC_MACOS, indent)
+      val fs = sm.toFormattedString(NewLines.CLASSIC_MACOS, indent)
 
       "^StateMachine\\([\\s\\S]*\\)$".r.pattern.matcher(fs).matches shouldBe true
 

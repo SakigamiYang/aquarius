@@ -1,6 +1,6 @@
 package me.sakigamiyang.aquarius.statemachine
 
-import me.sakigamiyang.aquarius.common.io.FileUtils
+import me.sakigamiyang.aquarius.common.io.{NewLine, NewLines}
 
 import scala.collection.mutable
 import scala.reflect.runtime.universe._
@@ -99,13 +99,13 @@ final class StateMachine[TState, TTrigger] private[statemachine](private val sta
    * @param indent  length of indent spaces
    * @return formatted string
    */
-  def toFormattedString(newLine: FileUtils.NewLines = FileUtils.NewLines.SYSTEM_DEPENDENT, indent: Int = 2): String = {
+  def toFormattedString(newLine: NewLine = NewLines.SYSTEM_DEPENDENT, indent: Int = 2): String = {
     require(indent >= 0)
 
     val indentSpaces = " " * indent
     transmissions.map {
       case ((state, trigger), nextState) => s"$indentSpaces$state*$trigger->$nextState"
-    }.mkString(s"StateMachine(${newLine.getContent}", s",${newLine.getContent}", s"${newLine.getContent})")
+    }.mkString(s"StateMachine(${newLine.value}", s",${newLine.value}", s"${newLine.value})")
   }
 
   /**
