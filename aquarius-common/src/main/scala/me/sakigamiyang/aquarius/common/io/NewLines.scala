@@ -5,6 +5,8 @@ sealed abstract class NewLine(content: String) {
   val name: String = toString
 
   def value: String = content
+
+  override def toString: String = value
 }
 
 object NewLines {
