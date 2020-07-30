@@ -1,4 +1,4 @@
-rootProject.name = 'scala-project-aquarius'
+rootProject.name = 'aquarius'
 include 'aquarius-common'
 include 'aquarius-state-machine'
 
