@@ -118,8 +118,9 @@ object StateMachine {
 
   class Builder[TState, TTrigger] {
     private[this] var initialState: TState = _
-    private[this] var states: mutable.Buffer[(TState, TOntoEvent)] = mutable.Buffer.empty
-    private[this] var transitions: mutable.Buffer[((TState, TTrigger), (TState, TTransitEvent))] = mutable.Buffer.empty
+    private[this] var states: mutable.Map[TState, TOntoEvent] = mutable.Map.empty
+    private[this] var transitions: mutable.Map[(TState, TTrigger), (TState, TTransitEvent)] = mutable.Map.empty
+    private[this] var reachableStates: mutable.Set[TState] = mutable.Set.empty
 
     def init(state: TState): Builder[TState, TTrigger] = {
       initialState = state
@@ -129,49 +130,40 @@ object StateMachine {
     def permit(from: TState, to: TState, on: TTrigger, callee: TTransitEvent = defaultTransitEvent): Builder[TState, TTrigger] = {
       onto(from)
       onto(to)
-      transitions :+= ((from, on), (to, callee))
+      transitions += (from, on) -> (to, callee)
       this
     }
 
     def onto(state: TState, callee: TOntoEvent = defaultOntoEvent): Builder[TState, TTrigger] = {
-      states :+= (state, callee)
+      states += state -> callee
       this
     }
 
+    private[this] def allReachableFromState(state: TState): Boolean = {
+      // Add current state into reachable states.
+      reachableStates += state
+      // Check all states which can be transited to from current state.
+      transitions.filterKeys { case (from, _) => from == state }
+        .values
+        .foreach { case (to, _) =>
+          if (!reachableStates.contains(to)) {
+            // Only check the states that we haven't known whether it was reachable.
+            allReachableFromState(to)
+          }
+        }
+      states.keySet.diff(reachableStates).isEmpty
+    }
+
     private[this] def validate(): Either[String, Unit] = {
-      var errorKeys: String = ""
-      val statesLiteral = states.map(_._1).toSet
-
-      // Check whether a state was defined by more than once.
-      errorKeys = states.groupBy(_._1)
-        .mapValues(_.length)
-        .filter(_._2 > 1)
-        .keys
-        .mkString(",")
-      if (!errorKeys.isEmpty)
-        return Left(s"States [$errorKeys] should be defined only once")
-
-      // Check whether a tuple of (state, trigger) was defined by more than once.
-      errorKeys = transitions.groupBy(_._1)
-        .mapValues(_.length)
-        .filter(_._2 > 1)
-        .keys
-        .map { case (state, trigger) => s"$state*$trigger" }
-        .mkString(",")
-      if (!errorKeys.isEmpty)
-        return Left(s"Transmissions [$errorKeys] should be added only once")
-
-      // Check whether all states in transmissions (including state and nextState) are defined in states.
-      errorKeys = transitions.flatMap(t => Seq(t._1._1, t._2._1))
-        .distinct
-        .filterNot(statesLiteral.contains)
-        .mkString(",")
-      if (!errorKeys.isEmpty)
-        return Left(s"States [$errorKeys] in transmissions are undefined")
-
       // Check whether the initial state is defined in states.
-      if (!statesLiteral.contains(initialState))
-        return Left(s"Initial state [$initialState] is undefined")
+      if (!states.contains(initialState))
+        return Left(s"Initial state [State($initialState)] is undefined")
+
+      // Check whether there is an unreachable state.
+      if (!allReachableFromState(initialState)) {
+        val unreachableStates = states.keys.filterNot(reachableStates.contains)
+        return Left(s"States [${unreachableStates.map(s => s"State($s)").mkString(",")}] are unreachable from initial state")
+      }
 
       Right(Unit)
     }

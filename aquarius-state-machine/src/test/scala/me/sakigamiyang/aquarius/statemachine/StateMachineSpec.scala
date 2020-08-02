@@ -4,23 +4,18 @@ import me.sakigamiyang.aquarius.common.io.NewLines
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 
-import scala.reflect.runtime.universe._
-
 class StateMachineSpec extends AnyFunSpec with Matchers {
   describe("test state machine") {
     it("convert to string") {
       val sm = StateMachine
         .builder()
-        .initState("a")
-        .addState("a")
-        .addState("b")
-        .addState("c")
-        .addTransmission("a", 1, "b")
-        .addTransmission("a", 2, "c")
-        .addTransmission("b", -1, "a")
-        .addTransmission("b", 1, "c")
-        .addTransmission("c", -1, "b")
-        .addTransmission("c", -2, "a")
+        .init("a")
+        .permit("a", "b", 1)
+        .permit("a", "c", 2)
+        .permit("b", "a", -1)
+        .permit("b", "c", 1)
+        .permit("c", "b", -1)
+        .permit("c", "a", -2)
         .build()
 
       val s = sm.toString
@@ -36,16 +31,13 @@ class StateMachineSpec extends AnyFunSpec with Matchers {
     it("convert to formatted string with default parameters") {
       val sm = StateMachine
         .builder()
-        .initState("a")
-        .addState("a")
-        .addState("b")
-        .addState("c")
-        .addTransmission("a", 1, "b")
-        .addTransmission("a", 2, "c")
-        .addTransmission("b", -1, "a")
-        .addTransmission("b", 1, "c")
-        .addTransmission("c", -1, "b")
-        .addTransmission("c", -2, "a")
+        .init("a")
+        .permit("a", "b", 1)
+        .permit("a", "c", 2)
+        .permit("b", "a", -1)
+        .permit("b", "c", 1)
+        .permit("c", "b", -1)
+        .permit("c", "a", -2)
         .build()
 
       val fs = sm.toFormattedString()
@@ -66,16 +58,13 @@ class StateMachineSpec extends AnyFunSpec with Matchers {
     it("convert to formatted string with newLine=\\r and indent=8") {
       val sm = StateMachine
         .builder()
-        .initState("a")
-        .addState("a")
-        .addState("b")
-        .addState("c")
-        .addTransmission("a", 1, "b")
-        .addTransmission("a", 2, "c")
-        .addTransmission("b", -1, "a")
-        .addTransmission("b", 1, "c")
-        .addTransmission("c", -1, "b")
-        .addTransmission("c", -2, "a")
+        .init("a")
+        .permit("a", "b", 1)
+        .permit("a", "c", 2)
+        .permit("b", "a", -1)
+        .permit("b", "c", 1)
+        .permit("c", "b", -1)
+        .permit("c", "a", -2)
         .build()
 
       val indent = 8
@@ -98,16 +87,13 @@ class StateMachineSpec extends AnyFunSpec with Matchers {
     it("get initial state") {
       val sm = StateMachine
         .builder()
-        .initState("a")
-        .addState("a")
-        .addState("b")
-        .addState("c")
-        .addTransmission("a", 1, "b")
-        .addTransmission("a", 2, "c")
-        .addTransmission("b", -1, "a")
-        .addTransmission("b", 1, "c")
-        .addTransmission("c", -1, "b")
-        .addTransmission("c", -2, "a")
+        .init("a")
+        .permit("a", "b", 1)
+        .permit("a", "c", 2)
+        .permit("b", "a", -1)
+        .permit("b", "c", 1)
+        .permit("c", "b", -1)
+        .permit("c", "a", -2)
         .build()
 
       sm.fire(1).fire(1).fire(-2)
@@ -117,16 +103,13 @@ class StateMachineSpec extends AnyFunSpec with Matchers {
     it("get current state") {
       val sm = StateMachine
         .builder()
-        .initState("a")
-        .addState("a")
-        .addState("b")
-        .addState("c")
-        .addTransmission("a", 1, "b")
-        .addTransmission("a", 2, "c")
-        .addTransmission("b", -1, "a")
-        .addTransmission("b", 1, "c")
-        .addTransmission("c", -1, "b")
-        .addTransmission("c", -2, "a")
+        .init("a")
+        .permit("a", "b", 1)
+        .permit("a", "c", 2)
+        .permit("b", "a", -1)
+        .permit("b", "c", 1)
+        .permit("c", "b", -1)
+        .permit("c", "a", -2)
         .build()
 
       sm.getInitialState shouldBe "a"
@@ -138,16 +121,13 @@ class StateMachineSpec extends AnyFunSpec with Matchers {
     it("get last state after initialized") {
       val sm = StateMachine
         .builder()
-        .initState("a")
-        .addState("a")
-        .addState("b")
-        .addState("c")
-        .addTransmission("a", 1, "b")
-        .addTransmission("a", 2, "c")
-        .addTransmission("b", -1, "a")
-        .addTransmission("b", 1, "c")
-        .addTransmission("c", -1, "b")
-        .addTransmission("c", -2, "a")
+        .init("a")
+        .permit("a", "b", 1)
+        .permit("a", "c", 2)
+        .permit("b", "a", -1)
+        .permit("b", "c", 1)
+        .permit("c", "b", -1)
+        .permit("c", "a", -2)
         .build()
 
       val thrown = intercept[StateMachineException] {
@@ -159,16 +139,13 @@ class StateMachineSpec extends AnyFunSpec with Matchers {
     it("get last state after fire trigger") {
       val sm = StateMachine
         .builder()
-        .initState("a")
-        .addState("a")
-        .addState("b")
-        .addState("c")
-        .addTransmission("a", 1, "b")
-        .addTransmission("a", 2, "c")
-        .addTransmission("b", -1, "a")
-        .addTransmission("b", 1, "c")
-        .addTransmission("c", -1, "b")
-        .addTransmission("c", -2, "a")
+        .init("a")
+        .permit("a", "b", 1)
+        .permit("a", "c", 2)
+        .permit("b", "a", -1)
+        .permit("b", "c", 1)
+        .permit("c", "b", -1)
+        .permit("c", "a", -2)
         .build()
 
       sm.fire(2).getLastState shouldBe "a"
@@ -176,10 +153,8 @@ class StateMachineSpec extends AnyFunSpec with Matchers {
 
     it("fire trigger") {
       val sm = StateMachine.builder()
-        .initState(1)
-        .addState(1)
-        .addState(2)
-        .addTransmission(1, 1, 2)
+        .init(1)
+        .permit(1, 2, 1)
         .build()
 
       sm.getCurrentState shouldBe 1
@@ -189,12 +164,9 @@ class StateMachineSpec extends AnyFunSpec with Matchers {
 
     it("forced to set to some state") {
       val sm = StateMachine.builder()
-        .initState(1)
-        .addState(1)
-        .addState(2)
-        .addState(3)
-        .addTransmission(1, 1, 2)
-        .addTransmission(2, 1, 3)
+        .init(1)
+        .permit(1, 2, 1)
+        .permit(2, 3, 1)
         .build()
 
       sm.getCurrentState shouldBe 1
@@ -202,55 +174,85 @@ class StateMachineSpec extends AnyFunSpec with Matchers {
       sm.getCurrentState shouldBe 3
     }
 
-    it("run enter action and exit action with no parameters") {
+    it("run transition action and onto action with no parameters") {
       var s = ""
 
       val sm = StateMachine.builder()
-        .initState(1)
-        .addState(1,
-          (_: Seq[(Type, Any)]) => s += " enter 1",
-          () => s += " exit 1")
-        .addState(2,
-          (_: Seq[(Type, Any)]) => s += " enter 2",
-          () => s += " exit 2")
-        .addState(3,
-          (_: Seq[(Type, Any)]) => s += " enter 3",
-          () => s += " exit 3")
-        .addTransmission(1, 1, 2)
-        .addTransmission(2, 1, 3)
+        .init(1)
+        .permit(1, 2, 1, (_: Seq[Any]) => s += "[1->2]")
+        .permit(2, 3, 1, (_: Seq[Any]) => s += "[2->3]")
+        .onto(2, () => s += "[onto 2]")
+        .onto(3, () => s += "[onto 3]")
         .build()
 
       sm.fire(1).forceState(3)
-      s.trim shouldBe "exit 1 enter 2 exit 2 enter 3"
+      s.contains("[1->2]") shouldBe true
+      s.contains("[onto 2]") shouldBe true
+      s.contains("[onto 3]") shouldBe true
     }
 
-    it("run enter action and exit action with parameters") {
+    it("run transition action with parameters, and 'forceState' do not trigger action") {
       var s = ""
 
+      def funcOneToTwo(args: Seq[Any]): Unit = {
+        s += s"[1->2](${args.head},${args.tail.head})"
+      }
+
+      def funcTwoToThree(args: Seq[Any]): Unit = {
+        s += s"[2->3](${args.head},${args.tail.head},${args.tail.tail.head})"
+      }
+
       val sm = StateMachine.builder()
-        .initState(1)
-        .addState(1,
-          (enterArgs1: Seq[(Type, Any)]) => s += s" enter 1 (+${enterArgs1.length} params)",
-          () => s += " exit 1")
-        .addState(2,
-          (enterArgs2: Seq[(Type, Any)]) => s += s" enter 2 (+${enterArgs2.length} params)",
-          () => s += " exit 2")
-        .addState(3,
-          (enterArgs3: Seq[(Type, Any)]) => s += s" enter 3 (+${enterArgs3.length} params)",
-          () => s += " exit 3")
-        .addTransmission(1, 1, 2)
-        .addTransmission(2, 1, 3)
+        .init(1)
+        .permit(1, 2, 1, funcOneToTwo)
+        .permit(2, 3, 1, funcTwoToThree)
         .build()
 
-      sm.fire(
-        1,
-        (typeOf[Int], 1)
-      ).forceState(
-        3,
-        (typeOf[Int], 1),
-        (typeOf[String], "a")
-      )
-      s.trim shouldBe "exit 1 enter 2 (+1 params) exit 2 enter 3 (+2 params)"
+      sm.fire(1, "a", 22).forceState(3)
+      s.contains("[1->2](a,22)") shouldBe true
+      s.contains("[2->3]") shouldBe false
+    }
+
+    it("check unreachable states 1") {
+      val errorMsg = intercept[StateMachineException] {
+        StateMachine
+          .builder()
+          .init("a")
+          .permit("a", "b", 1)
+          .permit("a", "c", 2)
+          .permit("b", "a", -1)
+          .permit("b", "c", 1)
+          .permit("c", "b", -1)
+          .permit("c", "a", -2)
+          .permit("d", "a", -3)
+          .build()
+      }.getMessage
+
+      errorMsg shouldBe "States [State(d)] are unreachable from initial state"
+
+    }
+
+    it("check unreachable states 2") {
+      val errorMsg = intercept[StateMachineException] {
+        StateMachine
+          .builder()
+          .init("a")
+          .permit("a", "b", 1)
+          .permit("a", "c", 2)
+          .permit("b", "a", -1)
+          .permit("b", "c", 1)
+          .permit("c", "b", -1)
+          .permit("c", "a", -2)
+          .permit("d", "e", 1)
+          .permit("e", "f", 1)
+          .permit("f", "d", -2)
+          .build()
+      }.getMessage
+
+      val matcher = "\\[.+]".r.findFirstMatchIn(errorMsg).get.group(0)
+      matcher.contains("State(d)") shouldBe true
+      matcher.contains("State(e)") shouldBe true
+      matcher.contains("State(f)") shouldBe true
     }
   }
 }

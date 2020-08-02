@@ -10,7 +10,7 @@ package object statemachine {
    */
   type TOntoEvent = () => Unit
 
-  val defaultTransitEvent: TTransitEvent = (args: Seq[Any]) => Unit
+  val defaultTransitEvent: TTransitEvent = (_: Seq[Any]) => Unit
 
   val defaultOntoEvent: TOntoEvent = () => ()
 }
