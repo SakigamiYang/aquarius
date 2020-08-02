@@ -47,6 +47,12 @@ final class StateMachine[TState, TTrigger] private[statemachine]
    */
   def getCurrentState: TState = currentState.getState
 
+  private[this] def transitTo(from: State[TState], to: State[TState]): Unit = {
+    lastState = Some(from)
+    currentState = to
+    currentState.onto()
+  }
+
   /**
    * Fire a trigger to transmit this state machine to next state.
    *
@@ -56,11 +62,9 @@ final class StateMachine[TState, TTrigger] private[statemachine]
    */
   def fire(trigger: TTrigger, args: Any*): StateMachine[TState, TTrigger] = {
     transitions.get((getCurrentState, trigger)) match {
-      case Some(value) =>
-        lastState = Some(currentState)
-        value.transitEvent(args)
-        currentState = value.to
-        currentState.ontoEvent()
+      case Some(transition) =>
+        transition.transitEvent(args)
+        transitTo(currentState, transition.to)
       case None => throw new StateMachineException(s"Transmission [$currentState*$trigger] is undefined")
     }
     this
@@ -74,10 +78,8 @@ final class StateMachine[TState, TTrigger] private[statemachine]
    */
   def forceState(state: TState): StateMachine[TState, TTrigger] = {
     states.get(state) match {
-      case Some(value) =>
-        lastState = Some(currentState)
-        currentState = value
-        currentState.ontoEvent()
+      case Some(state) =>
+        transitTo(currentState, state)
       case None => throw new StateMachineException(s"State [$state] is undefined")
     }
     this
