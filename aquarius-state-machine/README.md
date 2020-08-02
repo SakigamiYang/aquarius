@@ -7,35 +7,25 @@ State machine library.
 ```scala
 StateMachine
   .builder()
-  .initState("a")
-  .addState("a")
-  .addState("b")
-  .addState("c")
-  .addTransmission("a", 1, "b")
-  .addTransmission("a", 2, "c")
-  .addTransmission("b", -1, "a")
-  .addTransmission("b", 1, "c")
-  .addTransmission("c", -1, "b")
-  .addTransmission("c", -2, "a")
+  .init("a")
+  .permit("a", "b", 1)
+  .permit("a", "c", 2)
+  .permit("b", "a", -1)
+  .permit("b", "c", 1)
+  .permit("c", "b", -1)
+  .permit("c", "a", -2)
   .build()
 ```
 
-**Specify enter action and exit action for states.**
+**Specify onto action and transit action for states.**
 
 ```scala
 StateMachine.builder()
-  .initState(1)
-  .addState(1,
-    (enterArgs1: Seq[(Type, Any)]) => s += s" enter 1 (+${enterArgs1.length} params)",
-    () => s += " exit 1")
-  .addState(2,
-    (enterArgs2: Seq[(Type, Any)]) => s += s" enter 2 (+${enterArgs2.length} params)",
-    () => s += " exit 2")
-  .addState(3,
-    (enterArgs3: Seq[(Type, Any)]) => s += s" enter 3 (+${enterArgs3.length} params)",
-    () => s += " exit 3")
-  .addTransmission(1, 1, 2)
-  .addTransmission(2, 1, 3)
+  .init(1)
+  .permit(1, 2, 1, (_: Seq[Any]) => s += "[1->2]")
+  .permit(2, 3, 1, (_: Seq[Any]) => s += "[2->3]")
+  .onto(2, () => s += "[onto 2]")
+  .onto(3, () => s += "[onto 3]")
   .build()
 ```
 
@@ -45,18 +35,18 @@ StateMachine.builder()
 stateMachine.fire(1).forceState(3)
 ```
 
-When changing state, you can also specify arguments for enter action.<br />Notice that, arguments will be passed as a ```Seq``` of ```Tuple[Type, Any]```. 
+When changing state, you can also specify arguments for transit action.<br />Notice that, arguments will be passed as a ```Seq``` of ```Any```. 
 
-BTW, Exit action has no arguments.
+BTW, onto action has no arguments.
 
 ```scala
 stateMachine.fire(
     1,
-    (typeOf[Int], 1)
+    "a"  // arg 1 for transit action
   ).forceState(
     3,
-    (typeOf[Int], 1),
-    (typeOf[String], "a")
+    "bc",  // arg 1 for transit action
+    someObject  // arg 2 for transit action
   )
 ```
 
