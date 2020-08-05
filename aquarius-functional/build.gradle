@@ -1,0 +1,6 @@
+group 'me.sakigamiyang'
+version '1.0.0'
+
+test {
+    maxParallelForks = 1
+}
