@@ -1,28 +1,13 @@
 package me.sakigamiyang.aquarius.statemachine
 
-/**
- * State class.
- *
- * @param state     content of state
- * @param ontoEvent event to call when onto this state
- * @tparam TState type of state
- */
-case class State[TState](state: TState, ontoEvent: TOntoEvent)
-  extends Equals with Serializable {
+import me.sakigamiyang.aquarius.statemachine.impl.TransitionType
 
-  def getState: TState = state
+trait State[S, E, C] extends Visitable {
+  def getId: S
 
-  def onto(): Unit = ontoEvent()
+  def addTransition(event: E, target: State[S, E, C], transitionType: TransitionType.Value): Transition[S, E, C]
 
-  override def canEqual(that: Any): Boolean = that.isInstanceOf[State[TState]]
+  def getTransition(event: E): Option[Transition[S, E, C]]
 
-  override def equals(obj: Any): Boolean = obj match {
-    case that: State[TState] =>
-      that.canEqual(this) && this.hashCode == that.hashCode && this.getState == that.getState
-    case _ => false
-  }
-
-  override def hashCode(): Int = getState.hashCode
-
-  override def toString: String = s"State($getState)"
+  def getTransitions: Iterable[Transition[S, E, C]]
 }

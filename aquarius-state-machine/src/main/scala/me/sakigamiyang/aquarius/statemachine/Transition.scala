@@ -1,13 +1,23 @@
 package me.sakigamiyang.aquarius.statemachine
 
-/**
- * Transition from one state to another.
- *
- * @param from         state
- * @param to           next state
- * @param on           trigger
- * @param transitEvent event to call
- * @tparam TState   type of state
- * @tparam TTrigger type of trigger
- */
-case class Transition[TState, TTrigger](from: State[TState], to: State[TState], on: TTrigger, transitEvent: TTransitEvent)
+import me.sakigamiyang.aquarius.statemachine.impl.TransitionType
+
+trait Transition[S, E, C] {
+  def getSource: State[S, E, C]
+
+  def getTarget: State[S, E, C]
+
+  def getEvent: E
+
+  def getCondition: Condition[C]
+
+  def setCondition(condition: Condition[C]): Unit
+
+  def getAction: Action[S, E, C]
+
+  def setAction(action: Action[S, E, C]): Unit
+
+  def transit(context: C): State[S, E, C]
+
+  def verify(): Unit
+}

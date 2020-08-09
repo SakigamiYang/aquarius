@@ -1,4 +1,5 @@
 rootProject.name = 'aquarius'
 include 'aquarius-common'
 include 'aquarius-state-machine'
+include 'aquarius-functional'
 
