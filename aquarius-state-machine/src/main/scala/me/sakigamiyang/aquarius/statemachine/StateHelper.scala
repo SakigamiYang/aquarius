@@ -1,6 +1,4 @@
-package me.sakigamiyang.aquarius.statemachine.impl
-
-import me.sakigamiyang.aquarius.statemachine.State
+package me.sakigamiyang.aquarius.statemachine
 
 import scala.collection.concurrent
 

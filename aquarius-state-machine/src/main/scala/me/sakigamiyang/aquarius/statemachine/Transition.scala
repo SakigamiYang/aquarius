@@ -1,7 +1,5 @@
 package me.sakigamiyang.aquarius.statemachine
 
-import me.sakigamiyang.aquarius.statemachine.impl.TransitionType
-
 trait Transition[S, E, C] {
   def getSource: State[S, E, C]
 

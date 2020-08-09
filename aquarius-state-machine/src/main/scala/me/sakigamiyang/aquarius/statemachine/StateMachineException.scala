@@ -1,4 +1,4 @@
-package me.sakigamiyang.aquarius.statemachine.impl
+package me.sakigamiyang.aquarius.statemachine
 
 /**
  * StateMachineException

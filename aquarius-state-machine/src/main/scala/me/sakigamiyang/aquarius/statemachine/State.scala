@@ -1,8 +1,6 @@
 package me.sakigamiyang.aquarius.statemachine
 
-import me.sakigamiyang.aquarius.statemachine.impl.TransitionType
-
-trait State[S, E, C] extends Visitable {
+trait State[S, E, C] {
   def getId: S
 
   def addTransition(event: E, target: State[S, E, C], transitionType: TransitionType.Value): Transition[S, E, C]

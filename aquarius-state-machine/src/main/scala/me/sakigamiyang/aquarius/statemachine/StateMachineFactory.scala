@@ -1,7 +1,5 @@
 package me.sakigamiyang.aquarius.statemachine
 
-import me.sakigamiyang.aquarius.statemachine.impl.StateMachineException
-
 import scala.collection.concurrent
 
 /**

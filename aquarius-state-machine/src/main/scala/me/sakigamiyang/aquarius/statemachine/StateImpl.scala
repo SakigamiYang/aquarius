@@ -1,10 +1,9 @@
-package me.sakigamiyang.aquarius.statemachine.impl
-
-import me.sakigamiyang.aquarius.statemachine.{State, Transition, Visitor}
+package me.sakigamiyang.aquarius.statemachine
 
 import scala.collection.concurrent
 
-class StateImpl[S, E, C](final protected val stateId: S) extends State[S, E, C] with Serializable with Equals {
+class StateImpl[S, E, C](final protected val stateId: S)
+  extends State[S, E, C] with Serializable with Equals {
   private[this] val transitions: concurrent.Map[E, Transition[S, E, C]] = concurrent.TrieMap.empty
 
   override def getId: S = stateId
@@ -25,8 +24,6 @@ class StateImpl[S, E, C](final protected val stateId: S) extends State[S, E, C] 
   override def getTransition(event: E): Option[Transition[S, E, C]] = transitions.get(event)
 
   override def getTransitions: Iterable[Transition[S, E, C]] = transitions.values
-
-  override def accept(visitor: Visitor): String = visitor.visitOnEntry(this) + visitor.visitOnExit(this)
 
   override def toString: String = stateId.toString
 

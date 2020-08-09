@@ -1,9 +1,7 @@
 package me.sakigamiyang.aquarius.statemachine
 
-trait StateMachine[S, E, C] extends Visitable {
-  def fireEvent(sourceState: S, event: E, context: C)
+trait StateMachine[S, E, C] {
+  def fireEvent(sourceStateId: S, event: E, context: C): S
 
   def getMachineId: String
-
-  def showStateMachine(): Unit
 }

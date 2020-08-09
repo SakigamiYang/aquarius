@@ -1,14 +1,12 @@
-package me.sakigamiyang.aquarius.statemachine.impl
-
-import me.sakigamiyang.aquarius.statemachine.{Action, Condition, State, Transition}
+package me.sakigamiyang.aquarius.statemachine
 
 class TransitionImpl[S, E, C](private[this] val source: State[S, E, C],
                               private[this] val target: State[S, E, C],
                               private[this] val event: E,
                               private[this] val transitionType: TransitionType.Value)
   extends Transition[S, E, C] with Serializable with Equals {
-  private[this] var internalCondition: Condition[C] = _
-  private[this] var internalAction: Action[S, E, C] = _
+  private[this] var condition: Condition[C] = _
+  private[this] var action: Action[S, E, C] = _
 
   override def getSource: State[S, E, C] = source
 
@@ -16,19 +14,19 @@ class TransitionImpl[S, E, C](private[this] val source: State[S, E, C],
 
   override def getEvent: E = event
 
-  override def getCondition: Condition[C] = internalCondition
+  override def getCondition: Condition[C] = condition
 
-  override def setCondition(condition: Condition[C]): Unit = internalCondition = condition
+  override def setCondition(condition: Condition[C]): Unit = this.condition = condition
 
-  override def getAction: Action[S, E, C] = internalAction
+  override def getAction: Action[S, E, C] = action
 
-  override def setAction(action: Action[S, E, C]): Unit = internalAction = action
+  override def setAction(action: Action[S, E, C]): Unit = this.action = action
 
   override def transit(context: C): State[S, E, C] = {
     verify()
-    if (internalCondition == null || internalCondition.isSatisfied(context)) {
-      if (internalAction != null) {
-        internalAction.execute(source.getId, target.getId, event, context)
+    if (condition == null || condition.isSatisfied(context)) {
+      if (action != null) {
+        action.execute(source.getId, target.getId, event, context)
       }
       return target
     }
