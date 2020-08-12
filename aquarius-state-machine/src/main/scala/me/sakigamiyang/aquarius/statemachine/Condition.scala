@@ -1,7 +1,7 @@
 package me.sakigamiyang.aquarius.statemachine
 
-trait Condition[C] {
-  def isSatisfied(context: C): Boolean
+object Condition {
+  type Func[C] = C => Boolean
 
-  def name: String = getClass.getSimpleName
+  def noCondition[C]: Func[C] = (_: C) => true
 }

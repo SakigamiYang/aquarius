@@ -1,5 +1,7 @@
 package me.sakigamiyang.aquarius.statemachine
 
-trait Action[S, E, C] {
-  def execute(from: S, to: S, event: E, context: C): Unit
+object Action {
+  type Func[S, E, C] = (S, S, E, C) => Unit
+
+  def noAction[S, E, C]: Func[S, E, C] = (_: S, _: S, _: E, _: C) => ()
 }
