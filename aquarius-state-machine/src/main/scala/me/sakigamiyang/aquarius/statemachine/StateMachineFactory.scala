@@ -18,7 +18,8 @@ object StateMachineFactory {
    * @tparam C type of Context
    * @return state machine
    */
-  def register[S, E, C](machineId: String, stateMachine: StateMachine[S, E, C]): StateMachine[S, E, C] = {
+  def register[S, E, C](stateMachine: StateMachine[S, E, C]): StateMachine[S, E, C] = {
+    val machineId = stateMachine.getMachineId
     stateMachineMap.get(machineId) match {
       case Some(_) => throw new StateMachineException(s"The state machine with id [$machineId] is already built")
       case None => stateMachineMap.update(machineId, stateMachine)
