@@ -148,5 +148,5 @@ object StateMachine {
    * @tparam C type of context
    * @return StateMachine.Builder
    */
-  def builder[S, E, C]() = new Builder
+  def builder[S, E, C]() = new Builder[S, E, C]
 }
