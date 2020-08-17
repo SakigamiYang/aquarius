@@ -1,28 +1,35 @@
 package me.sakigamiyang.aquarius.statemachine
 
 /**
- * State class.
+ * State.
  *
- * @param state     content of state
- * @param ontoEvent event to call when onto this state
- * @tparam TState type of state
+ * @param stateId state id
+ * @tparam S type of state
+ * @tparam E type of event
+ * @tparam C type of context
  */
-case class State[TState](state: TState, ontoEvent: TOntoEvent)
-  extends Equals with Serializable {
+class State[S, E, C] private[statemachine](private final val stateId: S)
+  extends Serializable with Equals {
 
-  def getState: TState = state
+  /**
+   * Get state id.
+   *
+   * @return state id
+   */
+  def getId: S = stateId
 
-  def onto(): Unit = ontoEvent()
+  override def canEqual(that: Any): Boolean = that.isInstanceOf[State[S, E, C]]
 
-  override def canEqual(that: Any): Boolean = that.isInstanceOf[State[TState]]
+  override def equals(obj: Any): Boolean =
+    obj match {
+      case that: State[S, E, C] =>
+        that.canEqual(this) &&
+          that.hashCode() == this.hashCode() &&
+          that.stateId == this.stateId
+      case _ => false
+    }
 
-  override def equals(obj: Any): Boolean = obj match {
-    case that: State[TState] =>
-      that.canEqual(this) && this.hashCode == that.hashCode && this.getState == that.getState
-    case _ => false
-  }
+  override def hashCode(): Int = stateId.hashCode()
 
-  override def hashCode(): Int = getState.hashCode
-
-  override def toString: String = s"State($getState)"
+  override def toString: String = stateId.toString
 }

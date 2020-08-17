@@ -1,197 +1,152 @@
 package me.sakigamiyang.aquarius.statemachine
 
-import me.sakigamiyang.aquarius.common.io.{NewLine, NewLines}
-
-import scala.collection.mutable
+import scala.collection.concurrent
 
 /**
- * State machine
+ * State machine.
  *
- * @param states       states (Map from 'state' to State instance)
- * @param transitions  transmissions (Map from 'state * trigger' to Transition instance)
- * @param initialState initial state
- * @tparam TState   type of state
- * @tparam TTrigger type of trigger
+ * @param machineId     machine id
+ * @param initState     initial state
+ * @param stateMap      state mapping from state id to state
+ * @param transitionMap transition mapping from (state, event) to transition
+ * @tparam S type of state
+ * @tparam E type of event
+ * @tparam C type of context
  */
-final class StateMachine[TState, TTrigger] private[statemachine]
-(private val states: Map[TState, State[TState]],
- private val transitions: Map[(TState, TTrigger), Transition[TState, TTrigger]],
- private val initialState: State[TState])
+class StateMachine[S, E, C] private[StateMachine]
+(private[this] final val machineId: String,
+ private[this] final val initState: State[S, E, C],
+ private[this] final val stateMap: concurrent.Map[S, State[S, E, C]],
+ private[this] final val transitionMap: concurrent.Map[(State[S, E, C], E), Transition[S, E, C]])
   extends Serializable {
 
-  private[this] var lastState: Option[State[TState]] = None
-
-  private[this] var currentState: State[TState] = initialState
+  private[this] var currentState: State[S, E, C] = initState
 
   /**
-   * Get initial state.
+   * Get machine id.
    *
-   * @return initial state
+   * @return machine id
    */
-  def getInitialState: TState = initialState.getState
+  def getMachineId: String = machineId
 
   /**
-   * Get last state.
+   * Get state id of current state.
    *
-   * @return last state
+   * @return current state id
    */
-  def getLastState: TState = lastState match {
-    case Some(value) => value.getState
-    case _ => throw new StateMachineException(s"StateMachine is just initialized without having last state")
-  }
+  def getCurrentState: S = currentState.getId
 
   /**
-   * Get current state.
+   * Fire an event.
    *
-   * @return current state
-   */
-  def getCurrentState: TState = currentState.getState
-
-  private[this] def transitTo(from: State[TState], to: State[TState]): Unit = {
-    lastState = Some(from)
-    currentState = to
-    currentState.onto()
-  }
-
-  /**
-   * Fire a trigger to transmit this state machine to next state.
-   *
-   * @param trigger trigger
-   * @param args    arguments of enter action for next state
+   * @param event   event
+   * @param context context for condition and action of event
    * @return state machine
    */
-  def fire(trigger: TTrigger, args: Any*): StateMachine[TState, TTrigger] = {
-    transitions.get((getCurrentState, trigger)) match {
-      case Some(transition) =>
-        transition.transitEvent(args)
-        transitTo(currentState, transition.to)
-      case None => throw new StateMachineException(s"Transmission [$currentState*$trigger] is undefined")
+  def fire(event: E, context: C): StateMachine[S, E, C] = {
+    currentState = transitionMap.get((currentState, event)) match {
+      case Some(transition) => transition.transit(context)
+      case None => throw new StateMachineException(s"Event [$event] for state [$currentState] is undefined")
     }
     this
   }
 
   /**
-   * Force to set specific state to this state machine.
+   * Force to set any state without trigger any action.
    *
-   * @param state specific state
+   * @param stateId state id
    * @return state machine
    */
-  def forceState(state: TState): StateMachine[TState, TTrigger] = {
-    states.get(state) match {
-      case Some(state) =>
-        transitTo(currentState, state)
-      case None => throw new StateMachineException(s"State [$state] is undefined")
+  def force(stateId: S): StateMachine[S, E, C] = {
+    currentState = stateMap.get(stateId) match {
+      case Some(state) => state
+      case None => throw new StateMachineException(s"State [$stateId] is undefined")
     }
     this
-  }
-
-  /**
-   * To formatted string.
-   *
-   * @param newLine separator for newline
-   * @param indent  length of indent spaces
-   * @return formatted string
-   */
-  def toFormattedString(newLine: NewLine = NewLines.SYSTEM_DEPENDENT, indent: Int = 2): String = {
-    require(indent >= 0)
-
-    val indentSpaces = " " * indent
-    transitions.map {
-      case (_, transition) => s"$indentSpaces${transition.from}*${transition.on}->${transition.to}"
-    }.mkString(s"StateMachine($newLine", s",$newLine", s"$newLine)")
-  }
-
-  /**
-   * To string.
-   *
-   * @return string
-   */
-  override def toString: String = {
-    transitions.map {
-      case (_, transition) => s"${transition.from}*${transition.on}->${transition.to}"
-    }.mkString("StateMachine(", ",", ")")
   }
 }
 
+/**
+ * State machine.
+ */
 object StateMachine {
 
-  type TTransitEvent = Seq[Any] => Unit
-  type TOntoEvent = () => Unit
+  class Builder[S, E, C] {
+    private[this] var machineId: String = ""
+    private[this] var initState: Option[State[S, E, C]] = None
+    private[this] val stateMap: concurrent.Map[S, State[S, E, C]] = concurrent.TrieMap.empty
+    private[this] val transitionMap: concurrent.Map[(State[S, E, C], E), Transition[S, E, C]] = concurrent.TrieMap.empty
 
-  class Builder[TState, TTrigger] {
-    private[this] var initialState: TState = _
-    private[this] var states: mutable.Map[TState, TOntoEvent] = mutable.Map.empty
-    private[this] var transitions: mutable.Map[(TState, TTrigger), (TState, TTransitEvent)] = mutable.Map.empty
-    private[this] var reachableStates: mutable.Set[TState] = mutable.Set.empty
-
-    def init(state: TState): Builder[TState, TTrigger] = {
-      initialState = state
+    /**
+     * Set machine id.
+     *
+     * @param machineId machine id
+     * @return StateMachine.Builder
+     */
+    def setMachineId(machineId: String): Builder[S, E, C] = {
+      this.machineId = machineId
       this
     }
 
-    def permit(from: TState, to: TState, on: TTrigger, callee: TTransitEvent = defaultTransitEvent): Builder[TState, TTrigger] = {
-      onto(from)
-      onto(to)
-      transitions += (from, on) -> (to, callee)
+    /**
+     * Initialize state.
+     *
+     * @param stateId state id
+     * @return StateMachine.Builder
+     */
+    def init(stateId: S): Builder[S, E, C] = {
+      initState = Some(stateMap.getOrElseUpdate(stateId, new State(stateId)))
       this
     }
 
-    def onto(state: TState, callee: TOntoEvent = defaultOntoEvent): Builder[TState, TTrigger] = {
-      states += state -> callee
-      this
-    }
-
-    private[this] def allReachableFromState(state: TState): Boolean = {
-      // Add current state into reachable states.
-      reachableStates += state
-      // Check all states which can be transited to from current state.
-      transitions.filterKeys { case (from, _) => from == state }
-        .values
-        .foreach { case (to, _) =>
-          if (!reachableStates.contains(to)) {
-            // Only check the states that we haven't known whether it was reachable.
-            allReachableFromState(to)
-          }
-        }
-      states.keySet.diff(reachableStates).isEmpty
-    }
-
-    private[this] def validate(): Either[String, Unit] = {
-      // Check whether the initial state is defined in states.
-      if (!states.contains(initialState))
-        return Left(s"Initial state [State($initialState)] is undefined")
-
-      // Check whether there is an unreachable state.
-      if (!allReachableFromState(initialState)) {
-        val unreachableStates = states.keys.filterNot(reachableStates.contains)
-        return Left(s"States [${unreachableStates.map(s => s"State($s)").mkString(",")}] are unreachable from initial state")
+    /**
+     * Permit a transition.
+     *
+     * @param from    source state id
+     * @param to      target state id
+     * @param on      event
+     * @param when    condition
+     * @param perform action
+     * @return StateMachine.Builder
+     */
+    def permit(from: S,
+               to: S,
+               on: E,
+               when: Condition.Func[C] = Condition.noCondition,
+               perform: Action.Func[S, E, C] = Action.noAction): Builder[S, E, C] = {
+      val sourceState = stateMap.getOrElseUpdate(from, new State(from))
+      val targetState = stateMap.getOrElseUpdate(to, new State(to))
+      transitionMap.get((sourceState, on)) match {
+        case Some(_) => throw new StateMachineException(s"Event [$on] for state [$from] is redefined")
+        case None => transitionMap.update((sourceState, on), new Transition(sourceState, targetState, on, when, perform))
       }
-
-      Right(Unit)
+      this
     }
 
-    def build(): StateMachine[TState, TTrigger] = {
-      validate() match {
+    /**
+     * Build the state machine.
+     *
+     * @return state machine
+     */
+    def build(): StateMachine[S, E, C] = {
+      if (machineId.trim.isEmpty)
+        throw new StateMachineException("The id of state machine should be set up")
 
-        case Right(_) =>
-          // states
-          val internalStates = states.map {
-            case (state, ontoEvent) => (state, State(state, ontoEvent))
-          }.toMap
-          // transmissions
-          val internalTransitions = transitions.map {
-            case ((state, trigger), (nextState, transitEvent)) =>
-              ((state, trigger), Transition(internalStates(state), internalStates(nextState), trigger, transitEvent))
-          }.toMap
-          // initial state
-          val internalInitialState = internalStates(initialState)
-          // state machine
-          new StateMachine(internalStates, internalTransitions, internalInitialState)
+      if (initState.isEmpty)
+        throw new StateMachineException(s"The initial state of state machine [$machineId] is undefined")
 
-        case Left(message) => throw new StateMachineException(message)
-      }
+      val stateMachine = new StateMachine(machineId, initState.get, stateMap, transitionMap)
+      StateMachineFactory.register(stateMachine)
     }
   }
 
-  def builder[TState, TTrigger](): Builder[TState, TTrigger] = new Builder[TState, TTrigger]
+  /**
+   * Get a state machine builder.
+   *
+   * @tparam S type of state
+   * @tparam E type of event
+   * @tparam C type of context
+   * @return StateMachine.Builder
+   */
+  def builder[S, E, C]() = new Builder[S, E, C]
 }
