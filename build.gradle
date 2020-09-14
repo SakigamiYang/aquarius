@@ -1,6 +1,10 @@
 group 'me.sakigamiyang'
 version '1.0.0'
 
+wrapper {
+    distributionType = Wrapper.DistributionType.ALL
+}
+
 buildscript {
     repositories {
         mavenLocal()
